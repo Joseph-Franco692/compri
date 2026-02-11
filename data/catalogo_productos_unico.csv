@@ -1,0 +1,30 @@
+Nombre,Categoria,Subcategoria,Slug,Imagen_Referencia,Descripcion,ID,Ubicacion,Precio,PosX,PosY,PosZ
+Achiote en Pasta Palma de Oro,supermercado,condimentos,"achiote,cocina,sazonador",dataset/Achiote_Palma_de_Oro/aproducto12_0.jpg,Pasta de achiote.,0,Percha 2A - Condimentos,1.5,-15.85,2.0,-3.44
+Alcohol,farmacia,primeros auxilios,"alcohol,desinfeccion,salud",dataset/Alcohol_medico_LOV/IMG_0343.jpg,Alcohol etílico.,1,Percha 4A - Farmacia,2.0,1.70,2.0,-2.91
+Arroz El Artesanal Premium,supermercado,despensa,"arroz,granos,basico",dataset/Arroz_El_Artesanal/aproducto10_0.jpg,Arroz grano largo.,2,Percha 1A - Granos (Arroz/Frejol),4.5,-19.98,2.0,-4.07
+Base_Inalambrica,tecnologia,accesorios,"cargador,inalambrico,tech",dataset/base_inalambrica/base-inalambricaaa_0.jpg,Carga Qi.,3,Percha 5B - Tecnologia y Varios,15.0,10.07,2.0,-2.95
+Salsa BBQ Original,supermercado,salsas,"bbq,barbacoa,aderezo",dataset/Bbq_original/0D88AA41-A59D-423C-900A-ED128CB5B72C.JPG,Salsa BBQ.,4,Percha 2B - Salsas y Aderezos,3.25,-15.85,2.0,-3.44
+cajas de corona,licores,cervezas,"alcohol,cerveza,bebida",dataset/Cerveza_Corona/aproducto18_0.jpg,Cerveza importada.,5,Percha 5A - Licores,1.75,10.07,2.0,-2.95
+cajas de stella,licores,cervezas,"alcohol,cerveza,premium",dataset/Cerveza_Stella/aproducto19_0.jpg,Cerveza lager.,6,Percha 5A - Licores,2.1,10.07,2.0,-2.95
+Sazonador La Criollita Maggi,supermercado,condimentos,"maggi,sazonador,especias",dataset/Criollita_Maggi/aproducto11_0.jpg,Sazonador criollo.,7,Percha 2A - Condimentos,0.5,16.56,-4.337,-0.4415
+desinfectante_manzana,limpieza,pisos,"limpieza,desinfectante,hogar",dataset/Desinfectante_Tips_manzana/aproducto4_0.jpg,Desinfectante manzana.,8,Percha 3B - Limpieza Hogar,1.8,-5.73,2.0,-3.87
+Fréjol Rojo Facundo,supermercado,enlatados,"frejol,granos,conserva",dataset/Facundo_frejol_rojo/aproducto8_0.jpg,Fréjol rojo.,9,Percha 1A - Granos (Arroz/Frejol),1.25,-19.98,2.0,-4.07
+jabon_lavatodo,limpieza,ropa,"jabon,lavanderia,barra",dataset/Jabon_Lavatodo/PRODUCTOMEGA.MOV_0.jpg,Jabón ropa.,10,Percha 3A - Limpieza Ropa,0.85,-5.73,2.0,-3.87
+Vino_anthony,licores,vinos,"vino,lata,bebida",dataset/Lata_vino_Anthony/aproducto20_0.jpg,Vino tinto lata.,11,Percha 5A - Licores,3.5,10.07,2.0,-2.95
+Maíz Dulce Gustadina,supermercado,enlatados,"maiz,choclo,ensalada",dataset/Maiz_dulce_Gustadina/aproducto9_0.jpg,Maíz dulce.,12,Percha 1B - Enlatados,1.1,-19.98,2.0,-4.07
+Mayonesa Alacena Receta Casera,supermercado,salsas,"mayonesa,aderezo,crema",dataset/Mayonesa_Alacena/aproducto16_0.jpg,Mayonesa casera.,13,Percha 2B - Salsas y Aderezos,2.4,-15.85,2.0,-3.44
+Logitech,tecnologia,perifericos,"mouse,computacion,oficina",dataset/mouse_logitech/mouse_logitech_0.jpg,Mouse USB.,14,Percha 5B - Tecnologia y Varios,12.0,10.07,2.0,-2.95
+mr_musculo_spray,limpieza,cocina,"desengrasante,limpieza,spray",dataset/Mr_musculo_spray/aproducto3_0.jpg,Desengrasante.,15,Percha 3B - Limpieza Hogar,3.8,-5.73,2.0,-3.87
+Papel_Higenico,limpieza,baño,"papel,higiene,baño",dataset/Papel_higienico_Elite/aproducto5_0.jpg,Papel 4 rollos.,16,Percha 4B - Papel y Aseo,2.5,1.70,2.0,-2.91
+Papel_Higenico,limpieza,baño,"papel,higiene,premium",dataset/Papel_higienico_Elite2/aproducto6_0.jpg,Papel Premium.,17,Percha 4B - Papel y Aseo,3.0,1.70,2.0,-2.91
+quitamanchas,limpieza,ropa,"quitamanchas,ropa,lavado",dataset/Quita_manchas_supermaxi/aproducto2_0.jpg,Quitamanchas ropa.,18,Percha 3A - Limpieza Ropa,4.2,-5.73,2.0,-3.87
+Salsa de Tomate Picante Los Andes,supermercado,salsas,"ketchup,picante,tomate",dataset/Salsa_de_tomate_picante_Los_Andes/aproducto14_0.jpg,Salsa tomate picante.,19,Percha 2B - Salsas y Aderezos,1.6,-15.85,2.0,-3.44
+Sardinas Real en Salsa de Tomate,supermercado,enlatados,"pescado,sardina,proteina",dataset/Sardina_Real/IMG_0481.jpg,Sardinas tomate.,20,Percha 1B - Enlatados,1.85,-19.98,2.0,-4.07
+Sazonador Azafrán Condimensa,supermercado,condimentos,"especias,colorante,azafran",dataset/Sazonador_Azafran_Condimensa/aproducto13_0.jpg,Azafrán.,21,Percha 2A - Condimentos,1.2,-15.85,2.0,-3.44
+Servilletas_familia,hogar,cocina,"servilletas,papel,mesa",dataset/Servilleta_Familia/aproducto7_0.jpg,Servilletas mesa.,22,Percha 4B - Papel y Aseo,1.5,1.70,2.0,-2.91
+suavizante_gama,limpieza,ropa,"suavizante,aroma,lavado",dataset/suavizante_gama/aproducto1_0.jpg,Suavizante ropa.,23,Percha 3A - Limpieza Ropa,3.5,-5.73,2.0,-3.87
+Celular_infinix,tecnologia,celulares,"celular,movil,android",dataset/telefono_infinix/telefono_infinix_0.jpg,Smartphone.,24,Percha 5B - Tecnologia y Varios,180.0,-18.6886,0.1426,-10.453971
+Tomatodo,hogar,accesorios,"botella,agua,deporte",dataset/tomatodo/tomatodo_0.jpg,Tomatodo.,25,Percha 5B - Tecnologia y Varios,5.0,10.07,2.0,-2.95
+Vinagre Blanco Snob,supermercado,despensa,"vinagre,cocina,limpieza",dataset/Vinagre_blanco_SNOB/aproducto17_0.jpg,Vinagre blanco.,26,Percha 1B - Enlatados,0.9,-19.98,2.0,-4.07
+holA,farmacia,sada,hola,dataset/holA/holA_0.jpg,,999,Percha 1B - Enlatados,1.50,0,2,0
+Chips,supermercado,Galletas,chips,dataset/Chips/Chips_0.jpg,CHips ,999,Percha 5A - Licores,1,0,2,0

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mapa de Perchas - Detallado</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mapa.css') }}">
+</head>
+<body>
+
+    <h2><span class="material-icons">location_on</span> Ubicación Exacta</h2>
+    
+    <div class="map-container">
+        <svg width="100%" height="auto" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet" style="min-height: 400px;">
+            <rect x="0" y="0" width="500" height="400" class="floor" rx="5" />
+
+            <rect x="400" y="350" width="80" height="40" class="entrance" />
+            <text x="440" y="375" text-anchor="middle" fill="#b64a58" font-size="10">ENTRADA</text>
+            <rect x="380" y="20" width="100" height="30" class="checkout" rx="3" />
+            <text x="430" y="40" text-anchor="middle" fill="white" font-size="10">CAJAS</text>
+
+            <g transform="translate(40, 80)">
+                <rect x="18" y="0" width="4" height="250" class="shelf-divider" /> <rect x="0" y="0" width="18" height="250" class="shelf" id="shelf-1A" /> <rect x="22" y="0" width="18" height="250" class="shelf" id="shelf-1B" /> <text x="20" y="-10" class="aisle-label">P-1</text>
+                <text x="9" y="125" class="side-label">A</text>
+                <text x="31" y="125" class="side-label">B</text>
+            </g>
+
+            <g transform="translate(110, 80)">
+                <rect x="18" y="0" width="4" height="250" class="shelf-divider" />
+                <rect x="0" y="0" width="18" height="250" class="shelf" id="shelf-2A" />
+                <rect x="22" y="0" width="18" height="250" class="shelf" id="shelf-2B" />
+                <text x="20" y="-10" class="aisle-label">P-2</text>
+                <text x="9" y="125" class="side-label">A</text>
+                <text x="31" y="125" class="side-label">B</text>
+            </g>
+
+            <g transform="translate(180, 80)">
+                <rect x="18" y="0" width="4" height="250" class="shelf-divider" />
+                <rect x="0" y="0" width="18" height="250" class="shelf" id="shelf-3A" />
+                <rect x="22" y="0" width="18" height="250" class="shelf" id="shelf-3B" />
+                <text x="20" y="-10" class="aisle-label">P-3</text>
+                <text x="9" y="125" class="side-label">A</text>
+                <text x="31" y="125" class="side-label">B</text>
+            </g>
+
+            <g transform="translate(250, 80)">
+                <rect x="18" y="0" width="4" height="250" class="shelf-divider" />
+                <rect x="0" y="0" width="18" height="250" class="shelf" id="shelf-4A" />
+                <rect x="22" y="0" width="18" height="250" class="shelf" id="shelf-4B" />
+                <text x="20" y="-10" class="aisle-label">P-4</text>
+                <text x="9" y="125" class="side-label">A</text>
+                <text x="31" y="125" class="side-label">B</text>
+            </g>
+
+            <g transform="translate(320, 80)">
+                <rect x="18" y="0" width="4" height="250" class="shelf-divider" />
+                <rect x="0" y="0" width="18" height="250" class="shelf" id="shelf-5A" />
+                <rect x="22" y="0" width="18" height="250" class="shelf" id="shelf-5B" />
+                <text x="20" y="-10" class="aisle-label">P-5</text>
+                <text x="9" y="125" class="side-label">A</text>
+                <text x="31" y="125" class="side-label">B</text>
+            </g>
+
+        </svg>
+    </div>
+
+    <div class="status-text" id="status-text"><span class="material-icons">location_on</span><span id="status-text-content">...</span></div>
+    <button class="btn-close" onclick="window.close()"><span class="material-icons">close</span>Cerrar Mapa</button>
+
+    <script>
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const ubicacion = params.get('ubicacion'); // Ej: "Percha 3B - Limpieza"
+
+            if (ubicacion) {
+                document.getElementById('status-text-content').innerText = "Buscando en: " + ubicacion;
+                
+                // REGEX NUEVA: Busca "Percha", un espacio, un número y una letra (A o B)
+                // Ej: Match "3B" de "Percha 3B"
+                const match = ubicacion.match(/Percha\s+(\d+[AB])/i);
+
+                if (match) {
+                    const idDestino = match[1]; // "3B"
+                    const elemento = document.getElementById('shelf-' + idDestino); // "shelf-3B"
+                    
+                    if (elemento) {
+                        elemento.classList.add('highlighted-shelf');
+                    } else {
+                        console.log("No encontré el ID: shelf-" + idDestino);
+                    }
+                }
+            }
+        };
+    </script>
+</body>
+</html>

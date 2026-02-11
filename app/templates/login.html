@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - Compri Ayuda</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body>
+
+<div class="login-container">
+    <!-- Logo -->
+    <div class="login-logo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Compri Ayuda" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+        <div id="logo-fallback" class="logo-fallback" style="display:none;">
+            <span class="material-icons">store</span>
+        </div>
+    </div>
+
+    <h1>Panel Admin</h1>
+    <p class="login-subtitle">Ingresa tus credenciales para continuar</p>
+
+    <form id="loginForm" autocomplete="off">
+        <!-- Usuario -->
+        <div class="form-group">
+            <div class="input-field">
+                <span class="material-icons input-icon">person</span>
+                <input type="text" id="usuario" name="usuario" placeholder="Usuario" required autocomplete="off">
+            </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="form-group">
+            <div class="input-field">
+                <span class="material-icons input-icon">lock</span>
+                <input type="password" id="password" name="password" placeholder="Contraseña" required autocomplete="off">
+                <span class="material-icons toggle-password" id="togglePassword">visibility_off</span>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="loginError" class="login-error">
+            <span class="material-icons">error_outline</span>
+            <span id="errorText">Credenciales incorrectas</span>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-login" id="btnLogin">
+            <span class="material-icons">login</span>
+            Ingresar
+        </button>
+    </form>
+
+    <!-- Volver -->
+    <a href="/" class="back-link">
+        <span class="material-icons">arrow_back</span>
+        Volver al inicio
+    </a>
+</div>
+
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

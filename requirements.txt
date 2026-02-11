@@ -1,0 +1,12 @@
+# ===== Dependencias principales =====
+flask==3.1.*
+flask-cors==5.*
+tensorflow==2.18.*
+opencv-python==4.10.*
+numpy==2.*
+Pillow==11.*
+requests==2.*
+matplotlib==3.*
+
+# ===== Opcional (scripts auxiliares) =====
+pygltflib==1.*

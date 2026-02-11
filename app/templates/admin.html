@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Compri Ayuda</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">
+        <h1 style="margin-bottom:0;"> Admin: Nuevo Producto</h1>
+        <a href="/auth/logout" class="btn" style="width:auto; padding:8px 16px; font-size:0.8rem; background:var(--md-sys-color-secondary-container); color:var(--md-sys-color-on-secondary); margin-top:0; gap:6px; text-decoration:none; border-radius:var(--md-shape-small);">
+            <span class="material-icons" style="font-size:18px;">logout</span>
+            Cerrar sesión
+        </a>
+    </div>
+    
+    <form id="productForm">
+        <div class="form-group">
+            <label>Nombre del Producto:</label>
+            <input type="text" name="nombre" required placeholder="Ej: Galletas Oreo">
+        </div>
+        
+        <div class="form-group">
+            <label>Categoría General:</label>
+            <select name="categoria">
+                <option value="supermercado">Supermercado</option>
+                <option value="farmacia">Farmacia</option>
+                <option value="limpieza">Limpieza</option>
+                <option value="tecnologia">Tecnología</option>
+                <option value="hogar">Hogar</option>
+                <option value="licores">Licores</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Subcategoría (Opcional):</label>
+            <input type="text" name="subcategoria" placeholder="Ej: Galletas, Detergente líquido, etc.">
+            <small class="form-help">Si lo dejas vacío, se guardará como 'General'.</small>
+        </div>
+
+        <div class="form-group">
+            <label><span class="material-icons" style="font-size:20px; vertical-align:middle; margin-right:6px;">location_on</span> Ubicación Exacta (Percha y Lado):</label>
+            <select name="ubicacion" required>
+                <option value="" disabled selected>-- Seleccione Ubicación --</option>
+                
+                <optgroup label="PERCHA 1 (Despensa)">
+                    <option value="Percha 1A - Granos (Arroz/Frejol)">Percha 1A - Granos</option>
+                    <option value="Percha 1B - Enlatados">Percha 1B - Enlatados</option>
+                </optgroup>
+
+                <optgroup label="PERCHA 2 (Sabor)">
+                    <option value="Percha 2A - Condimentos">Percha 2A - Condimentos</option>
+                    <option value="Percha 2B - Salsas y Aderezos">Percha 2B - Salsas y Aderezos</option>
+                </optgroup>
+
+                <optgroup label="PERCHA 3 (Hogar)">
+                    <option value="Percha 3A - Limpieza Ropa">Percha 3A - Limpieza Ropa</option>
+                    <option value="Percha 3B - Limpieza Hogar">Percha 3B - Limpieza Hogar</option>
+                </optgroup>
+
+                <optgroup label="PERCHA 4 (Cuidado)">
+                    <option value="Percha 4A - Farmacia">Percha 4A - Farmacia</option>
+                    <option value="Percha 4B - Papel y Aseo">Percha 4B - Papel y Aseo</option>
+                </optgroup>
+
+                <optgroup label="PERCHA 5 (Varios)">
+                    <option value="Percha 5A - Licores">Percha 5A - Licores</option>
+                    <option value="Percha 5B - Tecnologia y Varios">Percha 5B - Tecnología y Varios</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Precio ($):</label>
+            <input type="number" step="0.01" name="precio" required placeholder="1.50">
+        </div>
+
+        <div class="form-group">
+            <label>Descripción:</label>
+            <textarea name="descripcion" rows="3" placeholder="Breve descripción..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Video del Producto (para Dataset):</label>
+            <div class="file-drop-zone" id="fileDropZone">
+                <span class="material-icons file-drop-icon">cloud_upload</span>
+                <p class="file-drop-text">Arrastra el video aquí o haz clic para seleccionar</p>
+                <p class="file-drop-hint">Formato: MP4, MOV, etc.</p>
+                <input type="file" name="video" accept="video/*" id="videoInput" required style="display:none;">
+            </div>
+            <p id="fileName" class="file-name-display"></p>
+            <small>El sistema extraerá fotos automáticamente de este video.</small>
+        </div>
+
+
+
+
+
+        <div class="form-group coords-box">
+            <label><span class="material-icons" style="font-size:20px; vertical-align:middle; margin-right:6px;">location_on</span> Coordenadas 3D (Para Teletransporte):</label>
+            <div class="coords-row">
+                <input type="number" step="0.1" name="pos_x" placeholder="X (Lado)" required value="0">
+                <input type="number" step="0.1" name="pos_y" placeholder="Y (Altura)" required value="2">
+                <input type="number" step="0.1" name="pos_z" placeholder="Z (Profundidad)" required value="0">
+            </div>
+            <small class="form-help">
+                Entra al modelo 3D, presiona 'C' para ver las coordenadas donde estás parado y cópialas aquí.
+            </small>
+        </div>
+
+
+
+
+
+
+
+
+
+        <button type="submit" class="btn btn-add"><span class="material-icons">save</span> Guardar Producto y Procesar Video</button>
+    </form>
+
+    <div id="add-status" class="status"></div>
+
+    <hr class="section-divider">
+
+    <h2><span class="material-icons">smart_toy</span> Inteligencia Artificial</h2>
+    <p class="section-note">Cuando hayas agregado los productos nuevos, presiona este botón para enseñar al modelo.</p>
+    
+    <button onclick="entrenarModelo()" class="btn btn-train"><span class="material-icons">rocket_launch</span> Re-Entrenar Modelo Ahora</button>
+    
+    <div id="loader" class="loading">
+        <span class="material-icons">schedule</span> Entrenando modelo... Esto puede tomar unos minutos. <br>
+        Por favor no cierres esta página.
+    </div>
+    <div id="train-status" class="status"></div>
+</div>
+
+<script>
+    
+    const fileDropZone = document.getElementById('fileDropZone');
+    const videoInput = document.getElementById('videoInput');
+    const fileName = document.getElementById('fileName');
+
+    fileDropZone.addEventListener('click', () => videoInput.click());
+
+    fileDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.add('dragover');
+    });
+
+    fileDropZone.addEventListener('dragleave', () => {
+        fileDropZone.classList.remove('dragover');
+    });
+
+    fileDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileDropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            videoInput.files = e.dataTransfer.files;
+            updateFileName();
+        }
+    });
+
+    videoInput.addEventListener('change', updateFileName);
+
+    function updateFileName() {
+        if (videoInput.files.length > 0) {
+            const file = videoInput.files[0];
+            fileName.innerText = '✓ ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+            fileName.style.display = 'block';
+        } else {
+            fileName.style.display = 'none';
+        }
+    }
+
+    // 1. SUBIR PRODUCTO
+    document.getElementById('productForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const statusDiv = document.getElementById('add-status');
+        statusDiv.style.display = 'block';
+        statusDiv.className = 'status';
+        statusDiv.innerText = "Subiendo video y procesando...";
+
+        const formData = new FormData(this);
+
+        try {
+            const response = await fetch('/admin/add_product', { method: 'POST', body: formData });
+            const data = await response.json();
+            
+            if (data.success) {
+                statusDiv.className = 'status success';
+                statusDiv.innerText = data.message;
+                this.reset(); // Limpiar formulario
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.innerText = "Error: " + data.error;
+            }
+        } catch (err) {
+            statusDiv.className = 'status error';
+            statusDiv.innerText = "Error de conexión.";
+        }
+    };
+
+    // 2. ENTRENAR MODELO
+    async function entrenarModelo() {
+        if(!confirm("¿Estás seguro? Esto detendrá el servidor unos minutos para procesar.")) return;
+
+        const loader = document.getElementById('loader');
+        const statusDiv = document.getElementById('train-status');
+        
+        loader.style.display = 'block';
+        statusDiv.style.display = 'none';
+
+        try {
+            const response = await fetch('/admin/train_model', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                statusDiv.className = 'status success';
+                statusDiv.style.display = 'block';
+                statusDiv.innerText = data.message;
+            } else {
+                statusDiv.className = 'status error';
+                statusDiv.style.display = 'block';
+                statusDiv.innerText = "Error: " + data.error;
+            }
+        } catch (err) {
+            statusDiv.className = 'status error';
+            statusDiv.style.display = 'block';
+            statusDiv.innerText = "Error crítico al entrenar.";
+        } finally {
+            loader.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

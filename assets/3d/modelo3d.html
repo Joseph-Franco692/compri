@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recorrido Virtual - Compri Ayuda</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: sans-serif; }
+        
+        #blocker {
+            position: absolute; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: white; z-index: 10;
+        }
+        #instructions {
+            font-size: 30px; cursor: pointer; text-align: center;
+            background: rgba(0,0,0,0.7); padding: 40px; border-radius: 10px; border: 2px solid white;
+        }
+        #loading { position: absolute; top: 10px; left: 10px; color: white; background: black; padding: 5px; }
+        #coordinates { 
+            position: absolute; 
+            bottom: 10px; 
+            left: 10px; 
+            color: white; 
+            background: rgba(0, 0, 0, 0.7); 
+            padding: 10px 15px; 
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Cargando modelo...</div>
+    <div id="coordinates">
+        X: 0.00 | Y: 0.00 | Z: 0.00
+    </div>
+
+    <div id="blocker">
+        <div id="instructions">
+            <p style="font-size:40px">Haga CLIC para Entrar</p>
+            <p>Moverse: W, A, S, D</p>
+            <p>Mirar: Mouse</p>
+            <p>Volar: R (Subir) / F (Bajar)</p>
+            <p style="font-size:16px">(ESC para salir)</p>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        let camera, scene, renderer, controls;
+        
+        let moveForward = false;
+        let moveBackward = false;
+        let moveLeft = false;
+        let moveRight = false;
+        let moveUp = false;
+        let moveDown = false;
+        
+        let prevTime = performance.now();
+        const velocity = new THREE.Vector3();
+        const direction = new THREE.Vector3();
+        
+        
+        let productToHighlight = null;
+        let highlightedMesh = null;
+        let highlightBox = null; //  Box visual para resaltar
+        let pulsePhase = 0;
+        let productMeshMap = {};  //  Mapeo de productos a mallas
+        let redMaterial = null; //  Material rojo para el producto
+
+        init();
+        animate();
+
+        function init() {
+            //  CARGAR MAPEO DE PRODUCTOS
+            fetch('/mapeo_productos.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('Mapeo no encontrado');
+                    return response.json();
+                })
+                .then(data => {
+                    productMeshMap = data;
+                    console.log(' Mapeo de productos cargado:', Object.keys(data).length, 'productos');
+                })
+                .catch(error => {
+                    console.warn('No se pudo cargar mapeo de productos (búsqueda por nombre directo):', error);
+                    productMeshMap = {};
+                });
+
+            // 1. Escena y Niebla
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 0, 75);
+
+            // 2. Cámara
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            // ---------------------------------------------------------
+            //  POSICIÓN INICIAL FIJA + PRODUCTO A RESALTAR
+            // ---------------------------------------------------------
+            const params = new URLSearchParams(window.location.search);
+            productToHighlight = params.get('producto'); 
+
+            // Siempre usar la misma posición inicial
+            camera.position.set(6.19, -0.78, -2.60); // Posición por defecto personalizada
+            
+            if (productToHighlight) {
+                console.log(` Producto a resaltar: ${productToHighlight}`);
+            }
+            // ---------------------------------------------------------
+
+            // 3. Luces 
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2.0);
+            hemiLight.position.set(0, 50, 0);
+            scene.add(hemiLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 3.0); 
+            dirLight.position.set(5, 50, 5);
+            scene.add(dirLight);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            scene.add(ambientLight);
+
+            const flashLight = new THREE.PointLight(0xffffff, 0.5, 15);
+            camera.add(flashLight);
+            scene.add(camera);
+
+            // 4. Controles
+            controls = new PointerLockControls(camera, document.body);
+
+            const blocker = document.getElementById('blocker');
+            const instructions = document.getElementById('instructions');
+
+            instructions.addEventListener('click', function () { controls.lock(); });
+            controls.addEventListener('lock', function () {
+                instructions.style.display = 'none';
+                blocker.style.display = 'none';
+            });
+            controls.addEventListener('unlock', function () {
+                blocker.style.display = 'flex';
+                instructions.style.display = 'block';
+            });
+
+            scene.add(controls.getObject());
+
+            // 5. Teclado
+            const onKeyDown = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp': case 'KeyW': moveForward = true; break;
+                    case 'ArrowLeft': case 'KeyA': moveLeft = true; break;
+                    case 'ArrowDown': case 'KeyS': moveBackward = true; break;
+                    case 'ArrowRight': case 'KeyD': moveRight = true; break;
+                    case 'KeyR': moveUp = true; break;
+                    case 'KeyF': moveDown = true; break;
+                    
+                    // TECLA "C" PARA VER COORDENADAS (UTIL PARA ADMIN)
+                    case 'KeyC':
+                        const p = controls.getObject().position;
+                        alert(`Coordenadas actuales:\nX: ${p.x.toFixed(2)}\nY: ${p.y.toFixed(2)}\nZ: ${p.z.toFixed(2)}`);
+                        break;
+                }
+            };
+
+            const onKeyUp = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp': case 'KeyW': moveForward = false; break;
+                    case 'ArrowLeft': case 'KeyA': moveLeft = false; break;
+                    case 'ArrowDown': case 'KeyS': moveBackward = false; break;
+                    case 'ArrowRight': case 'KeyD': moveRight = false; break;
+                    case 'KeyR': moveUp = false; break;
+                    case 'KeyF': moveDown = false; break;
+                }
+            };
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            // 6. Cargar Modelo
+            const loader = new GLTFLoader();
+            loader.load('ACTUAL.glb', function (gltf) { 
+                const object = gltf.scene;
+                
+                object.traverse(function(child) {
+                    if (child.isMesh) child.material.side = THREE.DoubleSide;
+                });
+
+                const box = new THREE.Box3().setFromObject(object);
+                const size = box.getSize(new THREE.Vector3());
+                const maxAxis = Math.max(size.x, size.y, size.z);
+                const scale = 20 / maxAxis; 
+                object.scale.set(scale, scale, scale);
+                
+                const center = box.getCenter(new THREE.Vector3());
+                object.position.y = -center.y * scale; 
+
+                scene.add(object);
+                document.getElementById('loading').innerText = "";
+
+                //  NUEVO: RESALTAR PRODUCTO DETECTADO
+                if (productToHighlight) {
+                    highlightProduct(object, productToHighlight);
+                }
+
+            }, undefined, function (error) {
+                console.error(error);
+                document.getElementById('loading').innerText = " Error al cargar modelo 3D";
+            });
+
+            // 7. Render
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            document.body.appendChild(renderer.domElement);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+
+        function highlightProduct(sceneObject, productName) {
+            console.log(` Buscando nodo para: "${productName}"`);
+            
+            //  Limpiar highlight anterior si existe
+            if (highlightBox) {
+                sceneObject.remove(highlightBox);
+                highlightBox.geometry.dispose();
+                highlightBox.material.dispose();
+                highlightBox = null;
+                console.log(`   Box anterior eliminado`);
+            }
+        
+            // Limpiar el nombre del producto
+            let nodeNameToFind = productName.trim();
+            
+            // PRIMERO: Buscar en el mapeo de productos
+            if (productMeshMap && productMeshMap[nodeNameToFind]) {
+                nodeNameToFind = productMeshMap[nodeNameToFind];
+                console.log(` Usando mapeo: "${productName}" → "${nodeNameToFind}"`);
+            }
+            
+            let foundNode = null;
+            
+            // ESTRATEGIA DE BÚSQUEDA: Intentar múltiples variaciones
+            const searchStrategies = [
+                nodeNameToFind,                                           // Exacto
+                nodeNameToFind.replace(/\s+/g, '_'),                     // Espacios → guiones bajos
+                nodeNameToFind.toLowerCase(),                            // Minúsculas
+                nodeNameToFind.replace(/\s+/g, '_').toLowerCase(),       // Guiones + minúsculas
+                nodeNameToFind.replace(/\.\d+$/, ''),                    // Sin sufijos (.001, .002)
+                nodeNameToFind.replace(/\s+/g, '_').replace(/\.\d+$/, ''), // Guiones sin sufijos
+            ];
+            
+            // Buscar usando cada estrategia
+            for (let strategy of searchStrategies) {
+                if (foundNode) break;
+                
+                sceneObject.traverse(function(child) {
+                    if (!foundNode && child.name === strategy) {
+                        console.log(`   ✓ Coincidencia encontrada (estrategia): "${strategy}"`);
+                        foundNode = child;
+                    }
+                });
+            }
+            
+            // Si aún no encuentra, búsqueda case-insensitive
+            if (!foundNode) {
+                sceneObject.traverse(function(child) {
+                    if (!foundNode && child.name.toLowerCase() === nodeNameToFind.toLowerCase()) {
+                        foundNode = child;
+                    }
+                });
+            }
+            
+            // Última opción: buscar por nombre base (remover sufijos)
+            if (!foundNode) {
+                let baseName = nodeNameToFind.replace(/\.\d+$/, '').replace(/\s+/g, '_').toLowerCase();
+                sceneObject.traverse(function(child) {
+                    if (!foundNode) {
+                        let childBaseName = child.name.replace(/\.\d+$/, '').toLowerCase();
+                        if (childBaseName === baseName) {
+                            console.log(`   ✓ Nodo base encontrado: "${child.name}"`);
+                            foundNode = child;
+                        }
+                    }
+                });
+            }
+            
+            if (!foundNode) {
+                let baseName = nodeNameToFind.replace(/\.\d+$/, '').replace(/\s+/g, '_').toLowerCase();
+                console.log(`   🔎 Buscando nodos que comiencen con: "${baseName}"`);
+                
+                sceneObject.traverse(function(child) {
+                    if (!foundNode) {
+                        let childName = child.name.toLowerCase();
+                        // Buscar nodos que empiecen con el nombre base (con o sin separador antes del número)
+                        if (childName.startsWith(baseName) && 
+                            (childName === baseName || // Exacto
+                             childName.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[_-]?\\d+$`)))) { // Con número
+                            console.log(`   Variante encontrada: "${child.name}"`);
+                            foundNode = child;
+                        }
+                    }
+                });
+            }
+            
+            if (foundNode) {
+                console.log(`¡Nodo encontrado!: "${foundNode.name}"`);
+                console.log(`   Tipo: ${foundNode.type}, isMesh: ${foundNode.isMesh}`);
+                console.log(`   Visible: ${foundNode.visible}, Parent visible: ${foundNode.parent?.visible}`);
+                
+                highlightedMesh = foundNode;
+                
+
+                foundNode.traverse(function(child) {
+                    if (child.isMesh) {
+                        // Crear material rojo emisivo
+                        redMaterial = new THREE.MeshStandardMaterial({
+                            color: 0xFF0000,
+                            emissive: 0xFF0000,
+                            emissiveIntensity: 0.8,
+                            transparent: false,
+                            metalness: 0.3,
+                            roughness: 0.4
+                        });
+                        
+                        child.material = redMaterial;
+                        console.log(`   Material rojo aplicado a: ${child.name}`);
+                    }
+                });
+                
+                console.log(`Resaltado rojo aplicado a: ${foundNode.name}`);
+                
+            } else {
+                console.warn(`No se encontró nodo para "${nodeNameToFind}". Buscando alternativas...`);
+                
+                // Mostrar nodos similares
+                let similarNodes = [];
+                let baseName = nodeNameToFind.replace(/\.\d+$/, '').split(/[\s_]/)[0].toLowerCase();
+                
+                sceneObject.traverse(function(child) {
+                    if (child.name.toLowerCase().includes(baseName) && baseName.length > 2) {
+                        similarNodes.push(child.name);
+                    }
+                });
+                
+                if (similarNodes.length > 0) {
+                    console.log(`Nodos similares encontrados:`);
+                    similarNodes.slice(0, 10).forEach(n => console.log(`   - ${n}`));
+                }
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+
+            if (controls.isLocked === true) {
+                const delta = (time - prevTime) / 1000;
+
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+                velocity.y -= velocity.y * 10.0 * delta;
+
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.y = Number(moveUp) - Number(moveDown);
+                direction.normalize();
+
+                const speed = 80.0;
+                if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
+                if (moveUp || moveDown) velocity.y -= direction.y * speed * delta;
+
+                controls.moveRight(-velocity.x * delta);
+                controls.moveForward(-velocity.z * delta);
+                controls.getObject().position.y += (velocity.y * delta);
+                
+                // ACTUALIZAR CONTADOR DE COORDENADAS
+                const pos = controls.getObject().position;
+                document.getElementById('coordinates').innerText = 
+                    `X: ${pos.x.toFixed(2)} | Y: ${pos.y.toFixed(2)} | Z: ${pos.z.toFixed(2)}`;
+            }
+
+            
+            if (highlightedMesh && redMaterial) {
+                pulsePhase += 0.1; // Velocidad de pulsación
+                const pulse = Math.sin(pulsePhase) * 0.5 + 0.5; // Oscila entre 0 y 1
+                
+                // Pulsar la intensidad emisiva dramáticamente
+                redMaterial.emissiveIntensity = 0.3 + (pulse * 1.5); // Entre 0.3 y 1.8
+                
+                // Pulsar también el color del material entre rojo oscuro y brillante
+                const colorIntensity = 0.5 + (pulse * 0.5); // Entre 0.5 y 1.0
+                redMaterial.color.setRGB(colorIntensity, 0, 0);
+                
+                // Pulsar el color emisivo
+                const emissiveIntensity = 0.7 + (pulse * 0.3); // Entre 0.7 y 1.0
+                redMaterial.emissive.setRGB(emissiveIntensity, 0, 0);
+            }
+
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
