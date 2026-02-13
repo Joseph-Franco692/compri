@@ -36,18 +36,16 @@ def reentrenar_modelo():
     class_names = train_ds.class_names
     print(f" Clases encontradas: {class_names}")
 
-    # Guardar clases actualizadas
     with open(CLASES_FILE, 'w') as f:
         for name in class_names:
             f.write(name + '\n')
     
-    # Optimización (Igual que tu código)
     AUTOTUNE = tf.data.AUTOTUNE
     train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
     val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
     # ================= 2. DATA AUGMENTATION =================
-    # (Igual que tu código)
+
     data_augmentation = tf.keras.Sequential([
         layers.RandomFlip("horizontal"),
         layers.RandomRotation(0.2),
@@ -80,19 +78,16 @@ def reentrenar_modelo():
         metrics=['accuracy']
     )
 
-    # Callbacks (Igual que tu código)
     callbacks = [
         EarlyStopping(patience=5, restore_best_weights=True),
         ReduceLROnPlateau(patience=3, factor=0.3, min_lr=1e-6)
     ]
 
     # ================= 4. ENTRENAMIENTO – FASE 1 =================
-    # RESTAURADO A 20 ÉPOCAS (Igual que el tuyo)
     print(" Entrenando FASE 1 (Esto tomará tiempo)...")
     model.fit(train_ds, validation_data=val_ds, epochs=20, callbacks=callbacks)
 
     # ================= 5. FINE-TUNING – FASE 2 =================
-    # RESTAURADO A 20 ÉPOCAS (Igual que el tuyo)
     print(" Fine-tuning del modelo (FASE 2)...")
     
     base_model.trainable = True

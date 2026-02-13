@@ -1,0 +1,155 @@
+/* Botón Flotante (FAB) */
+.fab-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1000;
+}
+
+.fab-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    box-shadow: var(--md-elevation-3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+    position: relative;
+}
+
+.fab-btn:hover {
+    transform: scale(1.05);
+    background: #a83d47;
+}
+
+.fab-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--md-sys-color-error);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--md-sys-color-surface);
+}
+
+/* Modal de Lista */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.modal-overlay.open {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: var(--md-sys-color-surface);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    border-radius: var(--md-shape-large);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--md-elevation-3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 { margin: 0; font-size: 1.2rem; }
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.lista-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: var(--md-sys-color-surface-variant);
+    border-radius: var(--md-shape-medium);
+    margin-bottom: 10px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.item-details h4 { margin: 0; font-size: 0.95rem; color: var(--md-sys-color-on-surface); }
+.item-details p { margin: 4px 0 0; font-size: 0.8rem; color: var(--md-sys-color-on-surface-variant); }
+
+.btn-remove {
+    background: transparent;
+    border: none;
+    color: var(--md-sys-color-error);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.btn-remove:hover { background: rgba(227, 91, 91, 0.1); }
+
+.modal-footer {
+    padding: 20px;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    display: flex;
+    gap: 10px;
+}
+
+.btn-pdf {
+    flex: 1;
+    background: var(--md-sys-color-primary);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-clear {
+    background: var(--md-sys-color-surface-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+}

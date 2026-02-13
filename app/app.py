@@ -6,11 +6,13 @@ import json
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
-from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for, make_response
 from flask_cors import CORS
 from PIL import Image
 from io import BytesIO
 import requests
+from fpdf import FPDF
+import datetime
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -422,6 +424,176 @@ def api_buscar():
             })
     
     return jsonify(resultados)
+
+
+    
+
+@app.route('/api/generar_lista_pdf', methods=['POST'])
+@app.route('/api/generar_lista_pdf', methods=['POST'])
+def generar_lista_pdf():
+    try:
+        data = request.json
+        productos = data.get('productos', [])
+        
+        class PDF(FPDF):
+            def header(self):
+                # Fondo oscuro superior (simulado con rectángulo)
+                self.set_fill_color(40, 27, 33)  # Color oscuro similar al fondo
+                self.rect(0, 0, 210, 45, 'F')
+                
+                # Logo/Título principal
+                self.set_text_color(255, 255, 255)
+                self.set_font('Arial', 'B', 24)
+                self.cell(0, 15, '', 0, 1)  # Espacio superior
+                self.cell(0, 12, 'COMPRI AYUDA', 0, 1, 'C')
+                
+                # Subtítulo
+                self.set_font('Arial', 'I', 14)
+                self.set_text_color(220, 130, 145)  # Color rosado/rojizo
+                self.cell(0, 8, 'Lista de Compras', 0, 1, 'C')
+                
+                # Línea decorativa
+                self.set_draw_color(220, 130, 145)
+                self.set_line_width(0.8)
+                self.line(15, 43, 195, 43)
+                
+                self.ln(8)
+            
+            def footer(self):
+                self.set_y(-20)
+                self.set_font('Arial', 'I', 9)
+                self.set_text_color(128, 128, 128)
+                self.cell(0, 10, f'Pagina {self.page_no()}', 0, 0, 'C')
+                
+                # Línea decorativa inferior
+                self.set_y(-25)
+                self.set_draw_color(220, 130, 145)
+                self.set_line_width(0.5)
+                self.line(15, self.get_y(), 195, self.get_y())
+        
+        pdf = PDF()
+        pdf.set_auto_page_break(auto=True, margin=25)
+        pdf.add_page()
+        
+        # Fecha y hora con estilo
+        pdf.set_font("Arial", 'B', 10)
+        pdf.set_text_color(80, 80, 80)
+        fecha = datetime.datetime.now().strftime('%d de %B del %Y - %H:%M')
+        
+        # Traducir mes a español (básico)
+        meses = {
+            'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo',
+            'April': 'Abril', 'May': 'Mayo', 'June': 'Junio',
+            'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre',
+            'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
+        }
+        for eng, esp in meses.items():
+            fecha = fecha.replace(eng, esp)
+        
+        pdf.cell(0, 8, f"Generado: {fecha}", 0, 1, 'R')
+        pdf.ln(3)
+        
+        # Información adicional
+        pdf.set_font("Arial", '', 9)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 6, f"Total de productos: {len(productos)}", 0, 1, 'R')
+        pdf.ln(5)
+        
+        # Encabezados de tabla con diseño mejorado
+        pdf.set_fill_color(182, 74, 88)  # Color principal rojizo
+        pdf.set_text_color(255, 255, 255)
+        pdf.set_font("Arial", 'B', 11)
+        pdf.set_draw_color(200, 200, 200)
+        
+        w_num = 12
+        w_prod = 73
+        w_precio = 30
+        w_ubic = 65
+        
+        pdf.cell(w_num, 10, "#", 1, 0, 'C', True)
+        pdf.cell(w_prod, 10, "Producto", 1, 0, 'C', True)
+        pdf.cell(w_precio, 10, "Precio", 1, 0, 'C', True)
+        pdf.cell(w_ubic, 10, "Ubicacion", 1, 1, 'C', True)
+        
+        # Productos con filas alternadas
+        pdf.set_font("Arial", size=10)
+        total = 0.0
+        
+        for idx, p in enumerate(productos, 1):
+            # Alternar colores de fila
+            if idx % 2 == 0:
+                pdf.set_fill_color(245, 245, 245)
+                fill = True
+            else:
+                fill = False
+            
+            pdf.set_text_color(50, 50, 50)
+            
+            nombre = str(p.get('nombre', 'Producto')).encode('latin-1', 'ignore').decode('latin-1')
+            ubicacion = str(p.get('ubicacion', '')).encode('latin-1', 'ignore').decode('latin-1')
+            precio_str = str(p.get('precio', '0')).replace('$', '').replace(',', '').strip()
+            
+            try:
+                precio_val = float(precio_str)
+            except:
+                precio_val = 0.0
+            total += precio_val
+            
+            # Número de ítem
+            pdf.cell(w_num, 9, str(idx), 1, 0, 'C', fill)
+            
+            # Nombre del producto
+            pdf.cell(w_prod, 9, nombre[:35], 1, 0, 'L', fill)
+            
+            # Precio con formato
+            pdf.set_text_color(33, 150, 83) if precio_val > 0 else pdf.set_text_color(180, 180, 180)
+            pdf.cell(w_precio, 9, f"${precio_val:.2f}", 1, 0, 'R', fill)
+            
+            # Ubicación
+            pdf.set_text_color(50, 50, 50)
+            pdf.cell(w_ubic, 9, ubicacion[:28], 1, 1, 'L', fill)
+        
+        # Espacio antes del total
+        pdf.ln(8)
+        
+        # Caja de resumen con borde
+        pdf.set_draw_color(182, 74, 88)
+        pdf.set_line_width(0.8)
+        
+        # Fondo del total
+        pdf.set_fill_color(250, 245, 245)
+        summary_y = pdf.get_y()
+        pdf.rect(15, summary_y, 180, 20, 'DF')
+        
+        # Texto del total
+        pdf.set_xy(15, summary_y + 5)
+        pdf.set_font("Arial", 'B', 16)
+        pdf.set_text_color(182, 74, 88)
+        pdf.cell(120, 10, "TOTAL ESTIMADO:", 0, 0, 'R')
+        
+        pdf.set_font("Arial", 'B', 18)
+        pdf.set_text_color(182, 74, 88)
+        pdf.cell(60, 10, f"${total:.2f}", 0, 1, 'R')
+        
+        # Nota al pie
+        pdf.ln(10)
+        pdf.set_font("Arial", 'I', 8)
+        pdf.set_text_color(120, 120, 120)
+        pdf.multi_cell(0, 5, 
+            "Nota: Los precios son estimados y pueden variar. "
+            "Por favor verifique los precios actuales en tienda.", 
+            0, 'C')
+        
+        response = make_response(pdf.output(dest='S').encode('latin-1'))
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=lista_compri_ayuda.pdf'
+        return response
+        
+    except Exception as e:
+        print(f"Error generando PDF: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)

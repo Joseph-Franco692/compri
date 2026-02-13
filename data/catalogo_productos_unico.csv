@@ -4,8 +4,8 @@ Alcohol,farmacia,primeros auxilios,"alcohol,desinfeccion,salud",dataset/Alcohol_
 Arroz El Artesanal Premium,supermercado,despensa,"arroz,granos,basico",dataset/Arroz_El_Artesanal/aproducto10_0.jpg,Arroz grano largo.,2,Percha 1A - Granos (Arroz/Frejol),4.5,-19.98,2.0,-4.07
 Base_Inalambrica,tecnologia,accesorios,"cargador,inalambrico,tech",dataset/base_inalambrica/base-inalambricaaa_0.jpg,Carga Qi.,3,Percha 5B - Tecnologia y Varios,15.0,10.07,2.0,-2.95
 Salsa BBQ Original,supermercado,salsas,"bbq,barbacoa,aderezo",dataset/Bbq_original/0D88AA41-A59D-423C-900A-ED128CB5B72C.JPG,Salsa BBQ.,4,Percha 2B - Salsas y Aderezos,3.25,-15.85,2.0,-3.44
-cajas de corona,licores,cervezas,"alcohol,cerveza,bebida",dataset/Cerveza_Corona/aproducto18_0.jpg,Cerveza importada.,5,Percha 5A - Licores,1.75,10.07,2.0,-2.95
-cajas de stella,licores,cervezas,"alcohol,cerveza,premium",dataset/Cerveza_Stella/aproducto19_0.jpg,Cerveza lager.,6,Percha 5A - Licores,2.1,10.07,2.0,-2.95
+cajas de corona,licores,cervezas,"alcohol,cerveza,bebida",dataset/Cerveza_Corona/aproducto18_0.jpg,Cerveza importada.,5,Percha 5A - Licores,28.00,10.07,2.0,-2.95
+cajas de stella,licores,cervezas,"alcohol,cerveza,premium",dataset/Cerveza_Stella/aproducto19_0.jpg,Cerveza lager.,6,Percha 5A - Licores,21.00,10.07,2.0,-2.95
 Sazonador La Criollita Maggi,supermercado,condimentos,"maggi,sazonador,especias",dataset/Criollita_Maggi/aproducto11_0.jpg,Sazonador criollo.,7,Percha 2A - Condimentos,0.5,16.56,-4.337,-0.4415
 desinfectante_manzana,limpieza,pisos,"limpieza,desinfectante,hogar",dataset/Desinfectante_Tips_manzana/aproducto4_0.jpg,Desinfectante manzana.,8,Percha 3B - Limpieza Hogar,1.8,-5.73,2.0,-3.87
 Fréjol Rojo Facundo,supermercado,enlatados,"frejol,granos,conserva",dataset/Facundo_frejol_rojo/aproducto8_0.jpg,Fréjol rojo.,9,Percha 1A - Granos (Arroz/Frejol),1.25,-19.98,2.0,-4.07
@@ -28,3 +28,4 @@ Tomatodo,hogar,accesorios,"botella,agua,deporte",dataset/tomatodo/tomatodo_0.jpg
 Vinagre Blanco Snob,supermercado,despensa,"vinagre,cocina,limpieza",dataset/Vinagre_blanco_SNOB/aproducto17_0.jpg,Vinagre blanco.,26,Percha 1B - Enlatados,0.9,-19.98,2.0,-4.07
 holA,farmacia,sada,hola,dataset/holA/holA_0.jpg,,999,Percha 1B - Enlatados,1.50,0,2,0
 Chips,supermercado,Galletas,chips,dataset/Chips/Chips_0.jpg,CHips ,999,Percha 5A - Licores,1,0,2,0
+dasdas,licores,liquido,dasdas,dataset/dasdas/dasdas_0.jpg,dasdasdasdas,999,Percha 5A - Licores,1,0,2,0

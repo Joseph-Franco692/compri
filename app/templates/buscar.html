@@ -1,128 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Catálogo - Compri Ayuda</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/buscar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lista.css') }}">
 </head>
+
 <body>
 
-<div class="container">
-    <div class="search-box">
-        <a href="/" class="btn-back"><span class="material-icons">arrow_back</span></a>
-        <input type="text" id="searchInput" placeholder="¿Qué buscas? (ej: Arroz)" onkeyup="buscarTexto()">
+    <div class="container">
+        <div class="search-box">
+            <a href="/" class="btn-back"><span class="material-icons">arrow_back</span></a>
+            <input type="text" id="searchInput" placeholder="¿Qué buscas? (ej: Arroz)" onkeyup="buscarTexto()">
+        </div>
+
+        <div class="categories-grid">
+            <div class="cat-btn" onclick="filtrarCategoria('supermercado', this)">
+                <span class="cat-icon material-icons">store</span><span class="cat-name">Supermercado</span>
+            </div>
+            <div class="cat-btn" onclick="filtrarCategoria('farmacia', this)">
+                <span class="cat-icon material-icons">local_pharmacy</span><span class="cat-name">Farmacia</span>
+            </div>
+            <div class="cat-btn" onclick="filtrarCategoria('limpieza', this)">
+                <span class="cat-icon material-icons">cleaning_services</span><span class="cat-name">Limpieza</span>
+            </div>
+            <div class="cat-btn" onclick="filtrarCategoria('tecnologia', this)">
+                <span class="cat-icon material-icons">smartphones</span><span class="cat-name">Tecnología</span>
+            </div>
+            <div class="cat-btn" onclick="filtrarCategoria('hogar', this)">
+                <span class="cat-icon material-icons">home</span><span class="cat-name">Hogar</span>
+            </div>
+            <div class="cat-btn" onclick="filtrarCategoria('licores', this)">
+                <span class="cat-icon material-icons">wine_bar</span><span class="cat-name">Licores</span>
+            </div>
+        </div>
+
+        <h3 class="results-title" id="titulo-resultados">Resultados</h3>
+
+        <div id="listaResultados" class="results-list">
+            <div class="empty-state">Selecciona una categoría o escribe arriba.</div>
+        </div>
     </div>
 
-    <div class="categories-grid">
-        <div class="cat-btn" onclick="filtrarCategoria('supermercado', this)">
-            <span class="cat-icon material-icons">store</span><span class="cat-name">Supermercado</span>
-        </div>
-        <div class="cat-btn" onclick="filtrarCategoria('farmacia', this)">
-            <span class="cat-icon material-icons">local_pharmacy</span><span class="cat-name">Farmacia</span>
-        </div>
-        <div class="cat-btn" onclick="filtrarCategoria('limpieza', this)">
-            <span class="cat-icon material-icons">cleaning_services</span><span class="cat-name">Limpieza</span>
-        </div>
-        <div class="cat-btn" onclick="filtrarCategoria('tecnologia', this)">
-            <span class="cat-icon material-icons">smartphones</span><span class="cat-name">Tecnología</span>
-        </div>
-        <div class="cat-btn" onclick="filtrarCategoria('hogar', this)">
-            <span class="cat-icon material-icons">home</span><span class="cat-name">Hogar</span>
-        </div>
-        <div class="cat-btn" onclick="filtrarCategoria('licores', this)">
-            <span class="cat-icon material-icons">wine_bar</span><span class="cat-name">Licores</span>
+    <div class="fab-container">
+        <button class="fab-btn" onclick="toggleModal()">
+            <span class="material-icons" style="font-size: 28px;">shopping_cart</span>
+            <div class="fab-badge" id="lista-count" style="display: none;">0</div>
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="modal-lista">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><span class="material-icons" style="vertical-align: bottom; margin-right: 8px;">list_alt</span>Mi
+                    Lista</h2>
+                <button class="btn-remove" onclick="toggleModal()"><span class="material-icons">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p id="lista-empty" class="placeholder-text" style="margin-top: 40px;">No has agregado productos aún.
+                </p>
+                <div id="lista-items-container"></div>
+            </div>
+            <div class="modal-footer" id="lista-footer" style="display: none;">
+                <button class="btn-clear" onclick="vaciarLista()">Vaciar</button>
+                <button class="btn-pdf" id="btn-descargar-pdf" onclick="descargarPDF()">
+                    <span class="material-icons">picture_as_pdf</span> Descargar PDF
+                </button>
+            </div>
         </div>
     </div>
 
-    <h3 class="results-title" id="titulo-resultados">Resultados</h3>
+    <script src="{{ url_for('static', filename='js/lista.js') }}"></script>
 
-    <div id="listaResultados" class="results-list">
-        <div class="empty-state">Selecciona una categoría o escribe arriba.</div>
-    </div>
-</div>
+    <script>
+        let timeout = null;
 
-<script>
-    let timeout = null;
+        function buscarTexto() {
+            const query = document.getElementById('searchInput').value;
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
 
-    function buscarTexto() {
-        const query = document.getElementById('searchInput').value;
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-
-        if(query.length < 2) {
-            document.getElementById('listaResultados').innerHTML = '<div class="empty-state">Escribe más...</div>';
-            return;
-        }
-
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            cargarDatos(`/api/buscar_producto?q=${encodeURIComponent(query)}`);
-        }, 300);
-    }
-
-    function filtrarCategoria(cat, elementoBtn) {
-        document.getElementById('searchInput').value = '';
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        elementoBtn.classList.add('active');
-        cargarDatos(`/api/buscar_producto?cat=${encodeURIComponent(cat)}`);
-    }
-
-    async function cargarDatos(urlEndpoint) {
-        const lista = document.getElementById('listaResultados');
-        lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">schedule</span>Cargando...</div>';
-
-        try {
-            const res = await fetch(urlEndpoint);
-            const productos = await res.json();
-
-            lista.innerHTML = '';
-
-            if (productos.length === 0) {
-                lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">cancel</span>No se encontraron productos.</div>';
+            if (query.length < 2) {
+                document.getElementById('listaResultados').innerHTML = '<div class="empty-state">Escribe más...</div>';
                 return;
             }
 
-            productos.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'product-item';
-                
-                const imgUrl = p.imagen ? p.imagen : 'https://via.placeholder.com/70';
-                
-                // Aseguramos coordenadas 
-                const cx = p.coords ? p.coords.x : 0;
-                const cy = p.coords ? p.coords.y : 2;
-                const cz = p.coords ? p.coords.z : 0;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                cargarDatos(`/api/buscar_producto?q=${encodeURIComponent(query)}`);
+            }, 300);
+        }
 
-                item.innerHTML = `
-                    <img src="${imgUrl}" class="thumb" onerror="this.src='https://via.placeholder.com/70?text=Sin+Foto'">
+        function filtrarCategoria(cat, elementoBtn) {
+            document.getElementById('searchInput').value = '';
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            elementoBtn.classList.add('active');
+            cargarDatos(`/api/buscar_producto?cat=${encodeURIComponent(cat)}`);
+        }
+
+        async function cargarDatos(urlEndpoint) {
+            const lista = document.getElementById('listaResultados');
+            lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">schedule</span>Cargando...</div>';
+
+            try {
+                const res = await fetch(urlEndpoint);
+                const productos = await res.json();
+
+                lista.innerHTML = '';
+
+                if (productos.length === 0) {
+                    lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">cancel</span>No se encontraron productos.</div>';
+                    return;
+                }
+
+                productos.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'product-item';
+
+                    const imgUrl = p.imagen ? p.imagen : 'https://via.placeholder.com/70';
+
+                    // Aseguramos coordenadas 
+                    const cx = p.coords ? p.coords.x : 0;
+                    const cy = p.coords ? p.coords.y : 2;
+                    const cz = p.coords ? p.coords.z : 0;
+
+                    // En app/templates/buscar.html, dentro de cargarDatos
+                    // Dentro de buscar.html -> function cargarDatos() -> productos.forEach...
+
+                    item.innerHTML = `
+                    <img src="${imgUrl}" class="thumb" 
+                        style="width: 80px; height: 80px; min-width: 80px; object-fit: cover; border-radius: 10px;" 
+                        onerror="this.src='https://via.placeholder.com/80?text=Sin+Foto'">
+                        
                     <div class="info">
                         <h3>${p.nombre}</h3>
                         <p class="price">$${p.precio}</p>
-                        <p><span class="material-icons" style="font-size:18px; vertical-align:middle; margin-right:4px;">location_on</span>${p.ubicacion}</p>
+                        <p><span class="material-icons" style="font-size:18px; vertical-align:middle;">location_on</span> ${p.ubicacion}</p>
                     </div>
+                    
                     <div class="buttons-group">
                         <button class="btn-go" onclick="verMapa('${p.ubicacion}')">Mapa 2D</button>
-                        <button class="btn-go-3d" onclick="ver3D(${cx}, ${cy}, ${cz}, '${p.nombre.replace(/'/g, "\\'")}')"><span class="material-icons" style="font-size:18px; margin-right:4px;">view_in_ar</span>Ver en 3D</button>
+                        <button class="btn-go-3d" onclick="ver3D(${cx}, ${cy}, ${cz}, '${p.nombre.replace(/'/g, "\\'")}')">
+                            <span class="material-icons" style="font-size:18px; margin-right:4px;">view_in_ar</span>Ver en 3D
+                        </button>
+                        <button class="btn-go" style="background:var(--md-sys-color-tertiary); padding: 0 10px;" 
+                            onclick='agregarALista({nombre: "${p.nombre.replace(/"/g, '&quot;')}", precio: "${p.precio}", ubicacion: "${p.ubicacion}"})'>
+                            <span class="material-icons">add_shopping_cart</span>
+                        </button>
                     </div>
                 `;
-                lista.appendChild(item);
-            });
+                    lista.appendChild(item);
+                });
 
-        } catch (err) {
-            console.error(err);
-            lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">warning</span>Error de conexión</div>';
+            } catch (err) {
+                console.error(err);
+                lista.innerHTML = '<div class="empty-state"><span class="material-icons" style="font-size:24px; margin-right:8px;">warning</span>Error de conexión</div>';
+            }
         }
-    }
 
-    function verMapa(ubicacion) {
-        window.open(`/mapa?ubicacion=${encodeURIComponent(ubicacion)}`, '_blank');
-    }
+        function verMapa(ubicacion) {
+            window.open(`/mapa?ubicacion=${encodeURIComponent(ubicacion)}`, '_blank');
+        }
 
-    function ver3D(x, y, z, nombre) {
-    window.open(`/modelo3d.html?x=${x}&y=${y}&z=${z}&producto=${encodeURIComponent(nombre)}`, '_blank');
-}
-</script>
+        function ver3D(x, y, z, nombre) {
+            window.open(`/modelo3d.html?x=${x}&y=${y}&z=${z}&producto=${encodeURIComponent(nombre)}`, '_blank');
+        }
+    </script>
 
 </body>
+
 </html>

@@ -1,421 +1,503 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compri Ayuda - IA Scanner</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     <link rel="stylesheet" href="../static/css/index.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lista.css') }}">
 </head>
+
 <body>
 
-<div class="boot-loader" id="boot-loader" aria-hidden="true">
-    <div class="boot-card">
-        <div class="m3-loader-container" aria-hidden="true">
-            <div class="m3-wavy-bar"></div>
+    <div class="boot-loader" id="boot-loader" aria-hidden="true">
+        <div class="boot-card">
+            <div class="m3-loader-container" aria-hidden="true">
+                <div class="m3-wavy-bar"></div>
+            </div>
+            <div class="boot-text">Cargando interfaz...</div>
         </div>
-        <div class="boot-text">Cargando interfaz...</div>
     </div>
-</div>
 
-<div class="page">
-    <header class="topbar">
-        <div class="brand">
-            <img src="../static/img/logo.png" alt="Compri Ayuda Logo" class="brand-icon">
-            <span class="brand-title"></span>
+    <div class="page">
+        <header class="topbar">
+            <div class="brand">
+                <img src="../static/img/logo.png" alt="Compri Ayuda Logo" class="brand-icon">
+                <span class="brand-title"></span>
+            </div>
+
+            <nav class="top-actions">
+                <button class="top-link" onclick="window.location.href='/buscar'"><span
+                        class="material-icons">search</span> Buscar Manual</button>
+                <button class="top-link" onclick="window.open('/modelo3d.html', '_blank')"><span
+                        class="material-icons">view_in_ar</span> Vista 3D</button>
+                <button class="top-link" onclick="window.location.href='/login'"><span
+                        class="material-icons">admin_panel_settings</span> Admin</button>
+            </nav>
+        </header>
+
+        <main class="main-grid">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Analizar Producto</h2>
+                    <div class="segmented">
+                        <button class="seg-btn active" onclick="switchTab('upload', this)"><span
+                                class="material-icons">photo_camera</span> Cámara / Foto</button>
+                        <button class="seg-btn" onclick="switchTab('url', this)"><span
+                                class="material-icons">link</span> Enlace URL</button>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <div id="section-upload" class="input-section active">
+                        <input type="file" id="fileInput" accept="image/*" hidden onchange="handleFileSelect(this)">
+                        <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" hidden
+                            onchange="handleFileSelect(this)">
+
+                        <div class="media-container">
+                            <div class="dropzone">
+                                <div class="dropzone-line"></div>
+                                <div class="dropzone-icon"><span class="material-icons">photo</span></div>
+                                <p class="placeholder-text" id="placeholder">Arrastra una imagen o activa la cámara</p>
+
+                                <div class="action-buttons">
+                                    <button class="btn-action" onclick="tryStartCamera()"><span
+                                            class="material-icons">videocam</span> Activar WebCam</button>
+                                    <button class="btn-action" onclick="triggerFileUpload()"><span
+                                            class="material-icons">folder</span> Subir Archivo</button>
+                                </div>
+                            </div>
+
+                            <video id="camera-stream" autoplay playsinline></video>
+                            <button id="btn-snap" class="btn-main btn-capture" onclick="takePhoto()">Capturar
+                                Foto</button>
+                            <canvas id="canvas" style="display:none;"></canvas>
+                        </div>
+
+                        <button class="btn-main" onclick="analizar('file')"><span
+                                class="material-icons">check_circle</span> Procesar Imagen</button>
+
+                        <div class="preview-well">
+                            <p class="placeholder-text" id="preview-placeholder">La imagen aparecerá aquí</p>
+                            <img id="preview-image" src="" alt="Vista Previa">
+                        </div>
+                    </div>
+
+                    <div id="section-url" class="input-section">
+                        <input type="text" id="urlInput" placeholder="Pega el link de la imagen aquí..."
+                            oninput="previewUrl()">
+                        <div class="media-container url-box">
+                            <img id="url-preview" alt="Vista URL">
+                            <p class="placeholder-text" id="url-placeholder">Esperando enlace...</p>
+                        </div>
+                        <button class="btn-main" onclick="analizar('url')"><span
+                                class="material-icons">check_circle</span> Analizar URL</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Resultados de IA</h2>
+                </div>
+
+                <div class="panel-body results-body">
+                    <div class="result-empty" id="result-empty">
+                        <div class="result-ghost"><span class="material-icons">inventory_2</span></div>
+                        <p>Los detalles del producto aparecerán aquí después del análisis.</p>
+                    </div>
+
+                    <div class="loader" id="loader">
+                        <span class="material-icons">sync</span> Procesando... Por favor espera.
+                        <div class="m3-loader-container">
+                            <div class="m3-wavy-bar"></div>
+                        </div>
+                    </div>
+
+                    <div class="result-card" id="result">
+                        <div class="images-comparison">
+                            <div class="comparison-item">
+                                <div class="comparison-label">Tu Imagen</div>
+                                <div class="db-image-container">
+                                    <img id="res-user-image" class="db-image" src="" alt="Imagen del Usuario">
+                                </div>
+                            </div>
+                            <div class="comparison-arrow">
+                                <span class="material-icons">arrow_forward</span>
+                            </div>
+                            <div class="comparison-item">
+                                <div class="comparison-label">Producto Detectado</div>
+                                <div class="db-image-container">
+                                    <img id="res-db-image" class="db-image" src="" alt="Producto BD">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-info">
+                            <span class="price-tag" id="res-price"></span>
+                            <button id="btn-add-list" class="btn-action"
+                                style="width:100%; background:var(--md-sys-color-primary-container); color:var(--md-sys-color-on-primary-container); margin-top:8px;">
+                                <span class="material-icons">add_shopping_cart</span> Agregar a la lista
+                            </button>
+                            <h3 class="product-title" id="res-name"></h3>
+                            <div class="meta-info">
+                                <span class="material-icons"
+                                    style="font-size:18px; vertical-align:middle; margin-right:4px;">location_on</span><span
+                                    id="res-loc"></span><br>
+                                <span class="confidence-badge" id="res-conf"></span>
+                            </div>
+                        </div>
+
+                        <p class="description" id="res-desc"></p>
+
+                        <button id="btn-map" class="btn-main btn-map" onclick="abrirMapa()"><span
+                                class="material-icons">map</span> Ver Ubicación en Mapa</button>
+
+                        <button id="btn-3d" class="btn-main btn-3d" onclick="abrir3D()"><span
+                                class="material-icons">store</span> Ver en Supermercado 3D</button>
+
+                        <a onclick="window.location.href='/buscar'" class="manual-search-link">
+                            ¿No es correcto? Buscar manualmente <span class="material-icons">search</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+
+    <div class="fab-container">
+        <button class="fab-btn" onclick="toggleModal()">
+            <span class="material-icons" style="font-size: 28px;">shopping_cart</span>
+            <div class="fab-badge" id="lista-count" style="display: none;">0</div>
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="modal-lista">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><span class="material-icons" style="vertical-align: bottom; margin-right: 8px;">list_alt</span>Mi
+                    Lista</h2>
+                <button class="btn-remove" onclick="toggleModal()"><span class="material-icons">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p id="lista-empty" class="placeholder-text" style="margin-top: 40px;">No has agregado productos aún.
+                </p>
+                <div id="lista-items-container"></div>
+            </div>
+            <div class="modal-footer" id="lista-footer" style="display: none;">
+                <button class="btn-clear" onclick="vaciarLista()">Vaciar</button>
+                <button class="btn-pdf" id="btn-descargar-pdf" onclick="descargarPDF()">
+                    <span class="material-icons">picture_as_pdf</span> Descargar PDF
+                </button>
+            </div>
         </div>
+    </div>
 
-        <nav class="top-actions">
-            <button class="top-link" onclick="window.location.href='/buscar'"><span class="material-icons">search</span> Buscar Manual</button>
-            <button class="top-link" onclick="window.open('/modelo3d.html', '_blank')"><span class="material-icons">view_in_ar</span> Vista 3D</button>
-            <button class="top-link" onclick="window.location.href='/login'"><span class="material-icons">admin_panel_settings</span> Admin</button>
-        </nav>
-    </header>
+    <script src="{{ url_for('static', filename='js/lista.js') }}"></script>
 
-    <main class="main-grid">
-        <section class="panel">
-            <div class="panel-header">
-                <h2>Analizar Producto</h2>
-                <div class="segmented">
-                    <button class="seg-btn active" onclick="switchTab('upload', this)"><span class="material-icons">photo_camera</span> Cámara / Foto</button>
-                    <button class="seg-btn" onclick="switchTab('url', this)"><span class="material-icons">link</span> Enlace URL</button>
-                </div>
-            </div>
 
-            <div class="panel-body">
-                <div id="section-upload" class="input-section active">
-                    <input type="file" id="fileInput" accept="image/*" hidden onchange="handleFileSelect(this)">
-                    <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" hidden onchange="handleFileSelect(this)">
 
-                    <div class="media-container">
-                        <div class="dropzone">
-                            <div class="dropzone-line"></div>
-                            <div class="dropzone-icon"><span class="material-icons">photo</span></div>
-                            <p class="placeholder-text" id="placeholder">Arrastra una imagen o activa la cámara</p>
+    <script>
+        let currentMode = 'upload';
+        let stream = null;
+        let imageBlob = null;
+        let userImageUrl = null; // URL de la imagen del usuario para mostrar en resultados
+        let ubicacionDetectada = "";
 
-                            <div class="action-buttons">
-                                <button class="btn-action" onclick="tryStartCamera()"><span class="material-icons">videocam</span> Activar WebCam</button>
-                                <button class="btn-action" onclick="triggerFileUpload()"><span class="material-icons">folder</span> Subir Archivo</button>
-                            </div>
-                        </div>
+        // Variables para coordenadas 3D
+        let coords3D = { x: 0, y: 2, z: 0 };
 
-                        <video id="camera-stream" autoplay playsinline></video>
-                        <button id="btn-snap" class="btn-main btn-capture" onclick="takePhoto()">Capturar Foto</button>
-                        <canvas id="canvas" style="display:none;"></canvas>
-                    </div>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bootLoader = document.getElementById('boot-loader');
+            if (!bootLoader) { return; }
 
-                    <button class="btn-main" onclick="analizar('file')"><span class="material-icons">check_circle</span> Procesar Imagen</button>
+            bootLoader.style.display = 'flex';
+            setTimeout(() => {
+                bootLoader.classList.add('hide');
+                setTimeout(() => { bootLoader.style.display = 'none'; }, 350);
+            }, 3000);
+        });
 
-                    <div class="preview-well">
-                        <p class="placeholder-text" id="preview-placeholder">La imagen aparecerá aquí</p>
-                        <img id="preview-image" src="" alt="Vista Previa">
-                    </div>
-                </div>
+        function switchTab(tab, button) {
+            document.querySelectorAll('.seg-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.input-section').forEach(s => s.classList.remove('active'));
+            if (button) { button.classList.add('active'); }
+            document.getElementById('section-' + tab).classList.add('active');
+            stopCamera();
 
-                <div id="section-url" class="input-section">
-                    <input type="text" id="urlInput" placeholder="Pega el link de la imagen aquí..." oninput="previewUrl()">
-                    <div class="media-container url-box">
-                        <img id="url-preview" alt="Vista URL">
-                        <p class="placeholder-text" id="url-placeholder">Esperando enlace...</p>
-                    </div>
-                    <button class="btn-main" onclick="analizar('url')"><span class="material-icons">check_circle</span> Analizar URL</button>
-                </div>
-            </div>
-        </section>
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('btn-map').style.display = 'none';
+            document.getElementById('btn-3d').style.display = 'none';
+            document.getElementById('result-empty').style.display = 'flex';
 
-        <section class="panel">
-            <div class="panel-header">
-                <h2>Resultados de IA</h2>
-            </div>
+            // Limpiar imagen del usuario
+            userImageUrl = null;
 
-            <div class="panel-body results-body">
-                <div class="result-empty" id="result-empty">
-                    <div class="result-ghost"><span class="material-icons">inventory_2</span></div>
-                    <p>Los detalles del producto aparecerán aquí después del análisis.</p>
-                </div>
+            // Desactivar scanner al cambiar tab
+            document.querySelectorAll('.media-container').forEach(el => el.classList.remove('scanner-active'));
+            document.querySelector('.results-body').classList.remove('scanner-active');
+        }
 
-                <div class="loader" id="loader">
-                    <span class="material-icons">sync</span> Procesando... Por favor espera.
-                    <div class="m3-loader-container">
-                        <div class="m3-wavy-bar"></div>
-                    </div>
-                </div>
+        function triggerFileUpload() { stopCamera(); document.getElementById('fileInput').click(); }
 
-                <div class="result-card" id="result">
-                    <div class="images-comparison">
-                        <div class="comparison-item">
-                            <div class="comparison-label">Tu Imagen</div>
-                            <div class="db-image-container">
-                                <img id="res-user-image" class="db-image" src="" alt="Imagen del Usuario">
-                            </div>
-                        </div>
-                        <div class="comparison-arrow">
-                            <span class="material-icons">arrow_forward</span>
-                        </div>
-                        <div class="comparison-item">
-                            <div class="comparison-label">Producto Detectado</div>
-                            <div class="db-image-container">
-                                <img id="res-db-image" class="db-image" src="" alt="Producto BD">
-                            </div>
-                        </div>
-                    </div>
+        function handleFileSelect(inputElement) {
+            const file = inputElement.files[0];
+            if (file) {
+                const img = document.getElementById('preview-image');
+                const imageUrl = URL.createObjectURL(file);
+                img.src = imageUrl;
+                userImageUrl = imageUrl; // Guardar para mostrar en resultados
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('preview-placeholder').style.display = 'none';
+                document.getElementById('camera-stream').style.display = 'none';
+                document.getElementById('btn-snap').style.display = 'none';
+                img.style.display = 'block';
+                imageBlob = file;
+                currentMode = 'file';
 
-                    <div class="result-info">
-                        <span class="price-tag" id="res-price"></span>
-                        <h3 class="product-title" id="res-name"></h3>
-                        <div class="meta-info">
-                            <span class="material-icons" style="font-size:18px; vertical-align:middle; margin-right:4px;">location_on</span><span id="res-loc"></span><br>
-                            <span class="confidence-badge" id="res-conf"></span>
-                        </div>
-                    </div>
+                // Activar scanner en media-container
+                const mediaContainer = document.querySelector('.media-container');
+                if (mediaContainer) {
+                    mediaContainer.classList.add('scanner-active');
+                }
+            }
+        }
 
-                    <p class="description" id="res-desc"></p>
+        async function tryStartCamera() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('mobileCameraInput').click();
+            } else {
+                startCameraStream();
+            }
+        }
 
-                    <button id="btn-map" class="btn-main btn-map" onclick="abrirMapa()"><span class="material-icons">map</span> Ver Ubicación en Mapa</button>
-
-                    <button id="btn-3d" class="btn-main btn-3d" onclick="abrir3D()"><span class="material-icons">store</span> Ver en Supermercado 3D</button>
-
-                    <a onclick="window.location.href='/buscar'" class="manual-search-link">
-                        ¿No es correcto? Buscar manualmente <span class="material-icons">search</span>
-                    </a>
-                </div>
-            </div>
-        </section>
-    </main>
-</div>
-
-<script>
-    let currentMode = 'upload';
-    let stream = null;
-    let imageBlob = null;
-    let userImageUrl = null; // URL de la imagen del usuario para mostrar en resultados
-    let ubicacionDetectada = ""; 
-    
-    // Variables para coordenadas 3D
-    let coords3D = { x: 0, y: 2, z: 0 };
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const bootLoader = document.getElementById('boot-loader');
-        if (!bootLoader) { return; }
-
-        bootLoader.style.display = 'flex';
-        setTimeout(() => {
-            bootLoader.classList.add('hide');
-            setTimeout(() => { bootLoader.style.display = 'none'; }, 350);
-        }, 3000);
-    });
-
-    function switchTab(tab, button) {
-        document.querySelectorAll('.seg-btn').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.input-section').forEach(s => s.classList.remove('active'));
-        if (button) { button.classList.add('active'); }
-        document.getElementById('section-' + tab).classList.add('active');
-        stopCamera();
-        
-        document.getElementById('result').style.display = 'none';
-        document.getElementById('btn-map').style.display = 'none';
-        document.getElementById('btn-3d').style.display = 'none';
-        document.getElementById('result-empty').style.display = 'flex';
-        
-        // Limpiar imagen del usuario
-        userImageUrl = null;
-        
-        // Desactivar scanner al cambiar tab
-        document.querySelectorAll('.media-container').forEach(el => el.classList.remove('scanner-active'));
-        document.querySelector('.results-body').classList.remove('scanner-active');
-    }
-
-    function triggerFileUpload() { stopCamera(); document.getElementById('fileInput').click(); }
-
-    function handleFileSelect(inputElement) {
-        const file = inputElement.files[0];
-        if (file) {
+        async function startCameraStream() {
+            const video = document.getElementById('camera-stream');
             const img = document.getElementById('preview-image');
-            const imageUrl = URL.createObjectURL(file);
-            img.src = imageUrl;
-            userImageUrl = imageUrl; // Guardar para mostrar en resultados
+            const btnSnap = document.getElementById('btn-snap');
+            img.style.display = 'none';
             document.getElementById('placeholder').style.display = 'none';
             document.getElementById('preview-placeholder').style.display = 'none';
-            document.getElementById('camera-stream').style.display = 'none';
+            video.style.display = 'block';
+            btnSnap.style.display = 'block';
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+            } catch (err) {
+                console.log("Error stream: ", err);
+                alert("No se pudo iniciar video. Se abrirá el selector de archivos.");
+                document.getElementById('fileInput').click();
+                stopCamera();
+            }
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('canvas');
+            const img = document.getElementById('preview-image');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob(blob => {
+                imageBlob = blob;
+                const imageUrl = URL.createObjectURL(blob);
+                img.src = imageUrl;
+                userImageUrl = imageUrl; // Guardar para mostrar en resultados
+                stopCamera();
+                img.style.display = 'block';
+                document.getElementById('preview-placeholder').style.display = 'none';
+
+                // Activar scanner en media-container
+                const mediaContainer = document.querySelector('.media-container');
+                if (mediaContainer) {
+                    mediaContainer.classList.add('scanner-active');
+                }
+            }, 'image/jpeg');
+        }
+
+        function stopCamera() {
+            const video = document.getElementById('camera-stream');
+            if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
+            video.style.display = 'none';
             document.getElementById('btn-snap').style.display = 'none';
-            img.style.display = 'block';
-            imageBlob = file;
-            currentMode = 'file';
-            
-            // Activar scanner en media-container
-            const mediaContainer = document.querySelector('.media-container');
-            if (mediaContainer) {
-                mediaContainer.classList.add('scanner-active');
-            }
-        }
-    }
-
-    async function tryStartCamera() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            document.getElementById('mobileCameraInput').click();
-        } else {
-            startCameraStream();
-        }
-    }
-
-    async function startCameraStream() {
-        const video = document.getElementById('camera-stream');
-        const img = document.getElementById('preview-image');
-        const btnSnap = document.getElementById('btn-snap');
-        img.style.display = 'none';
-        document.getElementById('placeholder').style.display = 'none';
-        document.getElementById('preview-placeholder').style.display = 'none';
-        video.style.display = 'block';
-        btnSnap.style.display = 'block';
-
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            video.srcObject = stream;
-        } catch (err) { 
-            console.log("Error stream: ", err);
-            alert("No se pudo iniciar video. Se abrirá el selector de archivos.");
-            document.getElementById('fileInput').click(); 
-            stopCamera();
-        }
-    }
-
-    function takePhoto() {
-        const video = document.getElementById('camera-stream');
-        const canvas = document.getElementById('canvas');
-        const img = document.getElementById('preview-image');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        canvas.toBlob(blob => {
-            imageBlob = blob;
-            const imageUrl = URL.createObjectURL(blob);
-            img.src = imageUrl;
-            userImageUrl = imageUrl; // Guardar para mostrar en resultados
-            stopCamera();
-            img.style.display = 'block';
-            document.getElementById('preview-placeholder').style.display = 'none';
-            
-            // Activar scanner en media-container
-            const mediaContainer = document.querySelector('.media-container');
-            if (mediaContainer) {
-                mediaContainer.classList.add('scanner-active');
-            }
-        }, 'image/jpeg');
-    }
-
-    function stopCamera() {
-        const video = document.getElementById('camera-stream');
-        if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
-        video.style.display = 'none';
-        document.getElementById('btn-snap').style.display = 'none';
-    }
-
-    function previewUrl() {
-        const url = document.getElementById('urlInput').value;
-        const img = document.getElementById('url-preview');
-        if (url) {
-            img.src = url;
-            userImageUrl = url; // Guardar para mostrar en resultados
-            img.style.display = 'block';
-            document.getElementById('url-placeholder').style.display = 'none';
-            
-            // Activar scanner en media-container
-            const mediaContainer = document.querySelector('.media-container');
-            if (mediaContainer) {
-                mediaContainer.classList.add('scanner-active');
-            }
-        }
-    }
-
-    function abrirMapa() {
-        if (ubicacionDetectada) {
-            const url = `/mapa?ubicacion=${encodeURIComponent(ubicacionDetectada)}`;
-            window.open(url, '_blank');
-        } else {
-            alert("No hay ubicación detectada.");
-        }
-    }
-
-    // NUEVA FUNCIÓN PARA ABRIR 3D
-    function abrir3D() {
-        const productName = document.getElementById('res-name').innerText;
-        const url = `/modelo3d.html?x=${coords3D.x}&y=${coords3D.y}&z=${coords3D.z}&producto=${encodeURIComponent(productName)}`;
-        window.open(url, '_blank');
-    }
-
-    async function analizar(type) {
-        const loader = document.getElementById('loader');
-        const resultCard = document.getElementById('result');
-        const btnMap = document.getElementById('btn-map');
-        const btn3D = document.getElementById('btn-3d');
-        const resultEmpty = document.getElementById('result-empty');
-        const resultsBody = document.querySelector('.results-body');
-        const formData = new FormData();
-
-        // Desactivar scanner de media-container y activar en results-body
-        document.querySelectorAll('.media-container').forEach(el => el.classList.remove('scanner-active'));
-        if (resultsBody) {
-            resultsBody.classList.add('scanner-active');
         }
 
-        loader.style.display = 'block';
-        resultCard.style.display = 'none';
-        btnMap.style.display = 'none'; 
-        btn3D.style.display = 'none';
-        resultEmpty.style.display = 'none';
-
-        if (type === 'file') {
-            if (!imageBlob) { alert("Falta foto"); loader.style.display = 'none'; return; }
-            formData.append('file', imageBlob, 'img.jpg');
-        } else {
+        function previewUrl() {
             const url = document.getElementById('urlInput').value;
-            if (!url) { alert("Falta URL"); loader.style.display = 'none'; return; }
-            formData.append('url', url);
+            const img = document.getElementById('url-preview');
+            if (url) {
+                img.src = url;
+                userImageUrl = url; // Guardar para mostrar en resultados
+                img.style.display = 'block';
+                document.getElementById('url-placeholder').style.display = 'none';
+
+                // Activar scanner en media-container
+                const mediaContainer = document.querySelector('.media-container');
+                if (mediaContainer) {
+                    mediaContainer.classList.add('scanner-active');
+                }
+            }
         }
 
-        try {
-            const response = await fetch('/predict', { method: 'POST', body: formData });
-            const data = await response.json();
-
-            if (data.error) {
-                alert("Error: " + data.error);
+        function abrirMapa() {
+            if (ubicacionDetectada) {
+                const url = `/mapa?ubicacion=${encodeURIComponent(ubicacionDetectada)}`;
+                window.open(url, '_blank');
             } else {
-                console.log('Datos recibidos:', data); // DEBUG
-                console.log('imagen_url:', data.imagen_url); // DEBUG
-                
-                document.getElementById('res-price').innerText = "$" + data.precio;
-                document.getElementById('res-name').innerText = data.nombre_real;
-                document.getElementById('res-loc').innerText = data.ubicacion;
-                document.getElementById('res-conf').innerText = data.confidence + "% Match";
-                document.getElementById('res-desc').innerText = data.descripcion;
-                
-                ubicacionDetectada = data.ubicacion;
-                
-                // GUARDAR COORDENADAS RECIBIDAS
-                if (data.coords) {
-                    coords3D = data.coords;
-                }
+                alert("No hay ubicación detectada.");
+            }
+        }
 
-                // Mostrar imagen del usuario
-                const imgUser = document.getElementById('res-user-image');
-                if (userImageUrl) {
-                    imgUser.src = userImageUrl;
-                    imgUser.style.display = 'block';
-                } else {
-                    imgUser.src = "https://via.placeholder.com/160?text=Sin+Imagen";
-                    imgUser.style.display = 'block';
-                }
+        // NUEVA FUNCIÓN PARA ABRIR 3D
+        function abrir3D() {
+            const productName = document.getElementById('res-name').innerText;
+            const url = `/modelo3d.html?x=${coords3D.x}&y=${coords3D.y}&z=${coords3D.z}&producto=${encodeURIComponent(productName)}`;
+            window.open(url, '_blank');
+        }
 
-                // Mostrar imagen de la base de datos
-                const imgDb = document.getElementById('res-db-image');
-                if (data.imagen_url && data.imagen_url.trim() !== '') {
-                    console.log('Intentando cargar imagen:', data.imagen_url); // DEBUG
-                    
-                    // La imagen_url ya viene con la ruta completa desde el CSV (ej: "dataset/Producto/imagen.jpg")
-                    const imagePath = data.imagen_url.startsWith('/') ? data.imagen_url : `/${data.imagen_url}`;
-                    console.log('Ruta final:', imagePath); // DEBUG
-                    
-                    imgDb.src = imagePath;
-                    imgDb.style.display = 'block';
-                    
-                    imgDb.onload = function() {
-                        console.log('Imagen cargada exitosamente'); // DEBUG
-                    };
-                    
-                    imgDb.onerror = function() {
-                        console.error('Error al cargar imagen:', imagePath); // DEBUG
-                        this.src = "https://via.placeholder.com/160?text=Sin+Imagen";
-                        this.alt = "Imagen no disponible";
-                    };
+        async function analizar(type) {
+            const loader = document.getElementById('loader');
+            const resultCard = document.getElementById('result');
+            const btnMap = document.getElementById('btn-map');
+            const btn3D = document.getElementById('btn-3d');
+            const resultEmpty = document.getElementById('result-empty');
+            const resultsBody = document.querySelector('.results-body');
+            const formData = new FormData();
+
+            // Desactivar scanner de media-container y activar en results-body
+            document.querySelectorAll('.media-container').forEach(el => el.classList.remove('scanner-active'));
+            if (resultsBody) {
+                resultsBody.classList.add('scanner-active');
+            }
+
+            loader.style.display = 'block';
+            resultCard.style.display = 'none';
+            btnMap.style.display = 'none';
+            btn3D.style.display = 'none';
+            resultEmpty.style.display = 'none';
+
+            if (type === 'file') {
+                if (!imageBlob) { alert("Falta foto"); loader.style.display = 'none'; return; }
+                formData.append('file', imageBlob, 'img.jpg');
+            } else {
+                const url = document.getElementById('urlInput').value;
+                if (!url) { alert("Falta URL"); loader.style.display = 'none'; return; }
+                formData.append('url', url);
+            }
+
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
                 } else {
-                    console.warn('No se recibió imagen_url o está vacía'); // DEBUG
-                    imgDb.src = "https://via.placeholder.com/160?text=Sin+Imagen";
-                    imgDb.style.display = 'block';
+                    console.log('Datos recibidos:', data); // DEBUG
+                    console.log('imagen_url:', data.imagen_url); // DEBUG
+
+                    document.getElementById('res-price').innerText = "$" + data.precio;
+                    document.getElementById('res-name').innerText = data.nombre_real;
+                    // ... dentro del else de data.success ...
+                    const productoActual = {
+                        nombre: data.nombre_real,
+                        precio: data.precio,
+                        ubicacion: data.ubicacion
+                    };
+
+                    // Agregar un botón nuevo junto a los otros
+                    const resultInfoDiv = document.querySelector('.result-info'); // O donde quieras ponerlo
+                    // Recomiendo usar un ID en el contenedor de botones o insertarlo dinámicamente
+                    document.getElementById('res-loc').innerText = data.ubicacion;
+                    document.getElementById('res-conf').innerText = data.confidence + "% Match";
+                    document.getElementById('res-desc').innerText = data.descripcion;
+
+                    // ...
+                    document.getElementById('res-price').innerText = "$" + data.precio;
+                    // ...
+
+                    // Configurar botón de agregar
+                    document.getElementById('btn-add-list').onclick = function () {
+                        agregarALista({
+                            nombre: data.nombre_real,
+                            precio: data.precio,
+                            ubicacion: data.ubicacion
+                        });
+                    };
+
+                    ubicacionDetectada = data.ubicacion;
+
+                    // GUARDAR COORDENADAS RECIBIDAS
+                    if (data.coords) {
+                        coords3D = data.coords;
+                    }
+
+                    // Mostrar imagen del usuario
+                    const imgUser = document.getElementById('res-user-image');
+                    if (userImageUrl) {
+                        imgUser.src = userImageUrl;
+                        imgUser.style.display = 'block';
+                    } else {
+                        imgUser.src = "https://via.placeholder.com/160?text=Sin+Imagen";
+                        imgUser.style.display = 'block';
+                    }
+
+                    // Mostrar imagen de la base de datos
+                    const imgDb = document.getElementById('res-db-image');
+                    if (data.imagen_url && data.imagen_url.trim() !== '') {
+                        console.log('Intentando cargar imagen:', data.imagen_url); // DEBUG
+
+                        // La imagen_url ya viene con la ruta completa desde el CSV (ej: "dataset/Producto/imagen.jpg")
+                        const imagePath = data.imagen_url.startsWith('/') ? data.imagen_url : `/${data.imagen_url}`;
+                        console.log('Ruta final:', imagePath); // DEBUG
+
+                        imgDb.src = imagePath;
+                        imgDb.style.display = 'block';
+
+                        imgDb.onload = function () {
+                            console.log('Imagen cargada exitosamente'); // DEBUG
+                        };
+
+                        imgDb.onerror = function () {
+                            console.error('Error al cargar imagen:', imagePath); // DEBUG
+                            this.src = "https://via.placeholder.com/160?text=Sin+Imagen";
+                            this.alt = "Imagen no disponible";
+                        };
+                    } else {
+                        console.warn('No se recibió imagen_url o está vacía'); // DEBUG
+                        imgDb.src = "https://via.placeholder.com/160?text=Sin+Imagen";
+                        imgDb.style.display = 'block';
+                    }
+
+                    resultCard.style.display = 'flex';
+                    btnMap.style.display = 'block';
+                    btn3D.style.display = 'block'; // MOSTRAR BOTÓN 3D
+                    resultEmpty.style.display = 'none';
+
+                    // Desactivar scanner al mostrar resultados
+                    if (resultsBody) {
+                        resultsBody.classList.remove('scanner-active');
+                    }
                 }
-                
-                resultCard.style.display = 'flex';
-                btnMap.style.display = 'block';
-                btn3D.style.display = 'block'; // MOSTRAR BOTÓN 3D
-                resultEmpty.style.display = 'none';
-                
-                // Desactivar scanner al mostrar resultados
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión con el servidor.");
+            } finally {
+                loader.style.display = 'none';
+                // Desactivar scanner al finalizar
                 if (resultsBody) {
                     resultsBody.classList.remove('scanner-active');
                 }
             }
-        } catch (error) { 
-            console.error(error); 
-            alert("Error de conexión con el servidor."); 
-        } finally { 
-            loader.style.display = 'none'; 
-            // Desactivar scanner al finalizar
-            if (resultsBody) {
-                resultsBody.classList.remove('scanner-active');
-            }
         }
-    }
-</script>
+    </script>
+
+
 
 </body>
+
 </html>
