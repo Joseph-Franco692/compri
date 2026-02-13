@@ -56,7 +56,7 @@ def reentrenar_modelo():
     ])
 
     # ================= 3. MODELO (Transfer Learning) =================
-    # (Igual que tu código: MobileNetV2 + Rescaling correcto)
+    
     base_model = tf.keras.applications.MobileNetV2(
         input_shape=IMG_SIZE + (3,),
         include_top=False,
@@ -67,7 +67,7 @@ def reentrenar_modelo():
     model = models.Sequential([
         layers.Input(shape=IMG_SIZE + (3,)),
         data_augmentation,
-        layers.Rescaling(1./127.5, offset=-1), # TU LÓGICA DE NORMALIZACIÓN
+        layers.Rescaling(1./127.5, offset=-1), 
         base_model,
         layers.GlobalAveragePooling2D(),
         layers.Dropout(0.3),

@@ -73,7 +73,7 @@ CLASS_MAPPING = {
 def cargar_recursos():
     """Carga el modelo y CSV en memoria."""
     global model, class_names, catalogo
-    print("⚙️ Cargando recursos...")
+    print(" Cargando recursos...")
 
     # A. Cargar Clases
     if os.path.exists(CLASS_PATH):
@@ -84,10 +84,10 @@ def cargar_recursos():
     if os.path.exists(MODEL_FILENAME):
         try:
             model = tf.keras.models.load_model(MODEL_FILENAME)
-            print(f"✅ Modelo cargado: {MODEL_FILENAME}")
-        except Exception as e: print(f"❌ Error modelo: {e}")
+            print(f"Modelo cargado: {MODEL_FILENAME}")
+        except Exception as e: print(f"Error modelo: {e}")
     else:
-        print("⚠️ No hay modelo entrenado aún.")
+        print(" No hay modelo entrenado aún.")
 
     # C. Cargar CSV
     catalogo = {}
@@ -100,13 +100,13 @@ def cargar_recursos():
                     try:
                         nombre_carpeta = ruta.split('/')[1] 
                         catalogo[nombre_carpeta] = row
-                        print(f"✅ Cargado: {nombre_carpeta} -> {ruta}")
+                        print(f" Cargado: {nombre_carpeta} -> {ruta}")
                     except Exception as e:
-                        print(f"❌ Error al procesar: {ruta} - {e}")
-        print(f"📊 Total productos en catálogo: {len(catalogo)}")
+                        print(f" Error al procesar: {ruta} - {e}")
+        print(f" Total productos en catálogo: {len(catalogo)}")
     else:
-        print(f"❌ CSV no encontrado: {CSV_PATH}")
-    print("✅ Recursos listos.")
+        print(f" CSV no encontrado: {CSV_PATH}")
+    print(" Recursos listos.")
 
 
 def _to_float(val, default=0.0):
@@ -190,7 +190,7 @@ def serve_ds(filename):
 
 @app.route('/<path:filename>')
 def serve_files(filename):
-    # ✅ IMPORTANTE: Agregamos .glb para que cargue el modelo 3D y soportamos mayúsculas/minúsculas
+    # IMPORTANTE: Agregamos .glb para que cargue el modelo 3D y soportamos mayúsculas/minúsculas
     allowed = ['.obj', '.mtl', '.jpg', '.png', '.jpeg', '.bmp', '.gif', '.glb'] 
     
     # Verificar extensión (case-insensitive)
@@ -302,15 +302,15 @@ def predict():
         predicted_class = class_names[np.argmax(score)]
 
         # DEBUG: Ver qué se está prediciendo y qué hay en el catálogo
-        print(f"🔍 Clase predicha: {predicted_class}")
-        print(f"📚 Claves en catálogo: {list(catalogo.keys())}")
+        print(f" Clase predicha: {predicted_class}")
+        print(f" Claves en catálogo: {list(catalogo.keys())}")
         
         # Buscar Info - intentar con nombre directo, luego con mapeo
         catalog_key = CLASS_MAPPING.get(predicted_class, predicted_class)
         info = catalogo.get(catalog_key, catalogo.get(predicted_class, {}))
-        print(f"🔄 Mapeo: {predicted_class} -> {catalog_key}")
-        print(f"📄 Info encontrada: {info}")
-        print(f"🖼️ Imagen_Referencia: {info.get('Imagen_Referencia', 'NO ENCONTRADA')}")
+        print(f"Mapeo: {predicted_class} -> {catalog_key}")
+        print(f"Info encontrada: {info}")
+        print(f"Imagen_Referencia: {info.get('Imagen_Referencia', 'NO ENCONTRADA')}")
 
         result = {
             'class': predicted_class,
@@ -320,7 +320,7 @@ def predict():
             'ubicacion': info.get('Ubicacion', 'Desconocida'),
             'descripcion': info.get('Descripcion', 'Sin descripción disponible.'),
             'imagen_url': info.get('Imagen_Referencia', ''),
-            # ✅ ENVIAMOS COORDENADAS AL FRONTEND
+            # ENVIAMOS COORDENADAS AL FRONTEND
             'coords': {
                 'x': _to_float(info.get('PosX', 0), 0.0),
                 'y': _to_float(info.get('PosY', 2), 2.0),
@@ -331,7 +331,7 @@ def predict():
         return jsonify(result)
 
     except Exception as e:
-        print(f"❌ Error en predicción: {e}")
+        print(f"Error en predicción: {e}")
         return jsonify({'error': str(e)}), 500
 
 # ==========================================

@@ -17,7 +17,7 @@ Sistema inteligente de asistencia en supermercado con reconocimiento de producto
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/CompriAyuda.git
+git clone https://github.com/Damniansz/CompriAyuda.git
 cd CompriAyuda
 ```
 

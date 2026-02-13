@@ -76,30 +76,46 @@
         const velocity = new THREE.Vector3();
         const direction = new THREE.Vector3();
         
-        
+        // Variables para producto
         let productToHighlight = null;
         let highlightedMesh = null;
-        let highlightBox = null; //  Box visual para resaltar
+        let highlightBox = null;
         let pulsePhase = 0;
-        let productMeshMap = {};  //  Mapeo de productos a mallas
-        let redMaterial = null; //  Material rojo para el producto
+        let productMeshMap = {};
+        let redMaterial = null;
+
+        // Variables para flechas
+        let arrowMeshMap = {};
+        let activeArrows = [];
+        let arrowMaterials = [];
+        let arrowPhase = 0;
+        let arrowHeadPosition = 0;
+        let rutasPerchas = {};
+        let productoPercha = {};
+        
+        // Configuración de animación de flechas
+        const ARROW_SPEED = 0.03;
+        const ARROW_TRAIL_LENGTH = 3;
 
         init();
         animate();
 
         function init() {
-            //  CARGAR MAPEO DE PRODUCTOS
+            // CARGAR MAPEO DE PRODUCTOS (incluye rutas y perchas)
             fetch('/mapeo_productos.json')
                 .then(response => {
                     if (!response.ok) throw new Error('Mapeo no encontrado');
                     return response.json();
                 })
                 .then(data => {
-                    productMeshMap = data;
-                    console.log(' Mapeo de productos cargado:', Object.keys(data).length, 'productos');
+                    productMeshMap = data.productos || data;
+                    rutasPerchas = data.rutas_perchas || {};
+                    productoPercha = data.producto_percha || {};
+                    console.log('Mapeo de productos cargado:', Object.keys(productMeshMap).length, 'productos');
+                    console.log('Rutas de perchas cargadas:', Object.keys(rutasPerchas).length);
                 })
                 .catch(error => {
-                    console.warn('No se pudo cargar mapeo de productos (búsqueda por nombre directo):', error);
+                    console.warn('No se pudo cargar mapeo de productos:', error);
                     productMeshMap = {};
                 });
 
@@ -111,19 +127,15 @@
             // 2. Cámara
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            // ---------------------------------------------------------
-            //  POSICIÓN INICIAL FIJA + PRODUCTO A RESALTAR
-            // ---------------------------------------------------------
+            // POSICIÓN INICIAL FIJA + PRODUCTO A RESALTAR
             const params = new URLSearchParams(window.location.search);
             productToHighlight = params.get('producto'); 
 
-            // Siempre usar la misma posición inicial
-            camera.position.set(6.19, -0.78, -2.60); // Posición por defecto personalizada
+            camera.position.set(6.19, -0.78, -2.60);
             
             if (productToHighlight) {
-                console.log(` Producto a resaltar: ${productToHighlight}`);
+                console.log(`Producto a resaltar: ${productToHighlight}`);
             }
-            // ---------------------------------------------------------
 
             // 3. Luces 
             const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 2.0);
@@ -169,7 +181,6 @@
                     case 'KeyR': moveUp = true; break;
                     case 'KeyF': moveDown = true; break;
                     
-                    // TECLA "C" PARA VER COORDENADAS (UTIL PARA ADMIN)
                     case 'KeyC':
                         const p = controls.getObject().position;
                         alert(`Coordenadas actuales:\nX: ${p.x.toFixed(2)}\nY: ${p.y.toFixed(2)}\nZ: ${p.z.toFixed(2)}`);
@@ -212,14 +223,21 @@
                 scene.add(object);
                 document.getElementById('loading').innerText = "";
 
-                //  NUEVO: RESALTAR PRODUCTO DETECTADO
+                // Indexar flechas del modelo
+                indexarFlechas(object);
+                
+                // Ocultar todas las flechas inicialmente
+                ocultarTodasFlechas();
+
+                // RESALTAR PRODUCTO Y ACTIVAR FLECHAS
                 if (productToHighlight) {
                     highlightProduct(object, productToHighlight);
+                    activarRutaFlechas(productToHighlight);
                 }
 
             }, undefined, function (error) {
                 console.error(error);
-                document.getElementById('loading').innerText = " Error al cargar modelo 3D";
+                document.getElementById('loading').innerText = "Error al cargar modelo 3D";
             });
 
             // 7. Render
@@ -231,53 +249,200 @@
             window.addEventListener('resize', onWindowResize);
         }
 
+        // === FUNCIONES PARA FLECHAS ===
+        
+        function indexarFlechas(model) {
+            model.traverse(child => {
+                const name = child.name.toLowerCase();
+                if (name.includes('flecha')) {
+                    // Indexar por nombre exacto y variantes
+                    arrowMeshMap[name] = {
+                        node: child,
+                        originalMaterial: child.material
+                    };
+                    // También indexar por variantes sin puntos, guiones, etc.
+                    let base = name.replace(/\./g, '_');
+                    arrowMeshMap[base] = arrowMeshMap[name];
+                    let noDigits = name.replace(/\.[0-9]+$/, '');
+                    arrowMeshMap[noDigits] = arrowMeshMap[name];
+                }
+            });
+            console.log('Flechas indexadas:', Object.keys(arrowMeshMap).length);
+            console.log('Nombres indexados de flechas:');
+            Object.keys(arrowMeshMap).forEach(n => console.log('  -', n));
+        }
+
+        function ocultarTodasFlechas() {
+            for (const key in arrowMeshMap) {
+                arrowMeshMap[key].node.visible = false;
+            }
+        }
+
+        function activarRutaFlechas(productName) {
+            // Obtener percha del producto
+            const percha = productoPercha[productName];
+            if (!percha) {
+                console.warn('Percha no encontrada para:', productName);
+                return;
+            }
+
+            // Obtener ruta de flechas para esa percha
+            const ruta = rutasPerchas[percha];
+            if (!ruta || ruta.length === 0) {
+                console.warn('Ruta no encontrada para percha:', percha);
+                return;
+            }
+
+            console.log(`Activando ruta para ${productName} -> Percha ${percha}:`, ruta);
+
+            // Activar y animar flechas
+            activeArrows = [];
+            arrowMaterials = [];
+            arrowHeadPosition = -1;
+
+            ruta.forEach((flechaNombre, index) => {
+                let key = flechaNombre.toLowerCase();
+                let data = arrowMeshMap[key];
+
+                // Buscar variante sin punto (ejemplo: flecha.001 → flecha001)
+                if (!data) {
+                    let noDot = key.replace(/\./g, '');
+                    data = arrowMeshMap[noDot];
+                }
+
+                // Estrategia flexible: buscar variantes si no se encuentra
+                if (!data) {
+                    let alt1 = key.replace(/\./g, '_');
+                    let alt2 = key.replace(/\.[0-9]+$/, '');
+                    let alt3 = key.replace(/-/g, '_');
+                    let alt4 = key.replace(/_/g, '');
+                    let alt5 = key.replace(/flecha/gi, 'arrow');
+                    data = arrowMeshMap[alt1] || arrowMeshMap[alt2] || arrowMeshMap[alt3] || arrowMeshMap[alt4] || arrowMeshMap[alt5];
+                }
+
+                if (data) {
+                    data.node.visible = true;
+
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: 0x00FF44,
+                        emissive: 0x00FF44,
+                        emissiveIntensity: 1.0,
+                        transparent: true,
+                        opacity: 0.9,
+                        side: THREE.DoubleSide
+                    });
+
+                    data.node.traverse(sub => {
+                        if (sub.isMesh) sub.material = mat;
+                    });
+                    if (data.node.isMesh) data.node.material = mat;
+
+                    activeArrows.push({ node: data.node, index });
+                    arrowMaterials.push(mat);
+                } else {
+                    console.warn('Flecha no encontrada:', flechaNombre);
+                }
+            });
+
+            console.log('Flechas activas:', activeArrows.length);
+        }
+
+        function animarFlechas() {
+            const total = activeArrows.length;
+            if (total === 0) return;
+
+            arrowHeadPosition += ARROW_SPEED;
+            if (arrowHeadPosition > total + ARROW_TRAIL_LENGTH) {
+                arrowHeadPosition = -1;
+            }
+
+            arrowPhase += 0.08;
+            const globalPulse = Math.sin(arrowPhase) * 0.08 + 1.0;
+
+            for (let i = 0; i < total; i++) {
+                const mat = arrowMaterials[i];
+                if (!mat) continue;
+
+                const distToHead = arrowHeadPosition - i;
+
+                if (i === total - 1) {
+                    // Flecha destino: amarillo pulsante
+                    const pulse = Math.sin(arrowPhase * 2.5) * 0.4 + 0.6;
+                    mat.emissiveIntensity = (1.5 + pulse * 1.5) * globalPulse;
+                    mat.color.setRGB(1.0, 0.85 * pulse + 0.15, 0.0);
+                    mat.emissive.setRGB(0.9, 0.7 * pulse, 0);
+                    mat.opacity = 0.85 + pulse * 0.15;
+
+                } else if (i === 0) {
+                    // Flecha inicio: cian
+                    const pulse = Math.sin(arrowPhase * 1.5) * 0.3 + 0.7;
+                    mat.emissiveIntensity = (1.0 + pulse * 0.8) * globalPulse;
+                    mat.color.setRGB(0.0, 0.8 * pulse + 0.2, 1.0);
+                    mat.emissive.setRGB(0, 0.6 * pulse, 0.8);
+                    mat.opacity = 0.7 + pulse * 0.3;
+
+                } else if (distToHead >= 0 && distToHead <= ARROW_TRAIL_LENGTH) {
+                    // Estela de la cabeza viajera
+                    const trail = 1.0 - (distToHead / ARROW_TRAIL_LENGTH);
+                    const eased = trail * trail;
+                    mat.emissiveIntensity = (0.15 + eased * 2.35) * globalPulse;
+                    mat.color.setRGB(eased * 0.6, 0.3 + eased * 0.7, eased * 0.3);
+                    mat.emissive.setRGB(eased * 0.3, 0.9 * (0.3 + eased * 0.7), eased * 0.15);
+                    mat.opacity = 0.4 + eased * 0.6;
+
+                } else {
+                    // Flechas inactivas: verde tenue
+                    mat.emissiveIntensity = 0.15 * globalPulse;
+                    mat.color.setRGB(0, 0.25, 0.05);
+                    mat.emissive.setRGB(0, 0.125, 0.025);
+                    mat.opacity = 0.35;
+                }
+            }
+        }
+
+        // === FUNCIÓN PARA RESALTAR PRODUCTO ===
 
         function highlightProduct(sceneObject, productName) {
-            console.log(` Buscando nodo para: "${productName}"`);
+            console.log(`Buscando nodo para: "${productName}"`);
             
-            //  Limpiar highlight anterior si existe
+            // Limpiar highlight anterior si existe
             if (highlightBox) {
                 sceneObject.remove(highlightBox);
                 highlightBox.geometry.dispose();
                 highlightBox.material.dispose();
                 highlightBox = null;
-                console.log(`   Box anterior eliminado`);
             }
         
-            // Limpiar el nombre del producto
             let nodeNameToFind = productName.trim();
             
             // PRIMERO: Buscar en el mapeo de productos
             if (productMeshMap && productMeshMap[nodeNameToFind]) {
                 nodeNameToFind = productMeshMap[nodeNameToFind];
-                console.log(` Usando mapeo: "${productName}" → "${nodeNameToFind}"`);
+                console.log(`Usando mapeo: "${productName}" → "${nodeNameToFind}"`);
             }
             
             let foundNode = null;
             
-            // ESTRATEGIA DE BÚSQUEDA: Intentar múltiples variaciones
+            // ESTRATEGIA DE BÚSQUEDA
             const searchStrategies = [
-                nodeNameToFind,                                           // Exacto
-                nodeNameToFind.replace(/\s+/g, '_'),                     // Espacios → guiones bajos
-                nodeNameToFind.toLowerCase(),                            // Minúsculas
-                nodeNameToFind.replace(/\s+/g, '_').toLowerCase(),       // Guiones + minúsculas
-                nodeNameToFind.replace(/\.\d+$/, ''),                    // Sin sufijos (.001, .002)
-                nodeNameToFind.replace(/\s+/g, '_').replace(/\.\d+$/, ''), // Guiones sin sufijos
+                nodeNameToFind,
+                nodeNameToFind.replace(/\s+/g, '_'),
+                nodeNameToFind.toLowerCase(),
+                nodeNameToFind.replace(/\s+/g, '_').toLowerCase(),
+                nodeNameToFind.replace(/\.\d+$/, ''),
+                nodeNameToFind.replace(/\s+/g, '_').replace(/\.\d+$/, ''),
             ];
             
-            // Buscar usando cada estrategia
             for (let strategy of searchStrategies) {
                 if (foundNode) break;
-                
                 sceneObject.traverse(function(child) {
                     if (!foundNode && child.name === strategy) {
-                        console.log(`   ✓ Coincidencia encontrada (estrategia): "${strategy}"`);
                         foundNode = child;
                     }
                 });
             }
             
-            // Si aún no encuentra, búsqueda case-insensitive
+            // Búsqueda case-insensitive
             if (!foundNode) {
                 sceneObject.traverse(function(child) {
                     if (!foundNode && child.name.toLowerCase() === nodeNameToFind.toLowerCase()) {
@@ -286,32 +451,28 @@
                 });
             }
             
-            // Última opción: buscar por nombre base (remover sufijos)
+            // Buscar por nombre base
             if (!foundNode) {
                 let baseName = nodeNameToFind.replace(/\.\d+$/, '').replace(/\s+/g, '_').toLowerCase();
                 sceneObject.traverse(function(child) {
                     if (!foundNode) {
                         let childBaseName = child.name.replace(/\.\d+$/, '').toLowerCase();
                         if (childBaseName === baseName) {
-                            console.log(`   ✓ Nodo base encontrado: "${child.name}"`);
                             foundNode = child;
                         }
                     }
                 });
             }
             
+            // Buscar nodos que comiencen con el nombre
             if (!foundNode) {
                 let baseName = nodeNameToFind.replace(/\.\d+$/, '').replace(/\s+/g, '_').toLowerCase();
-                console.log(`   🔎 Buscando nodos que comiencen con: "${baseName}"`);
-                
                 sceneObject.traverse(function(child) {
                     if (!foundNode) {
                         let childName = child.name.toLowerCase();
-                        // Buscar nodos que empiecen con el nombre base (con o sin separador antes del número)
                         if (childName.startsWith(baseName) && 
-                            (childName === baseName || // Exacto
-                             childName.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[_-]?\\d+$`)))) { // Con número
-                            console.log(`   Variante encontrada: "${child.name}"`);
+                            (childName === baseName || 
+                             childName.match(new RegExp(`^${baseName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[_-]?\\d+$`)))) {
                             foundNode = child;
                         }
                     }
@@ -320,15 +481,10 @@
             
             if (foundNode) {
                 console.log(`¡Nodo encontrado!: "${foundNode.name}"`);
-                console.log(`   Tipo: ${foundNode.type}, isMesh: ${foundNode.isMesh}`);
-                console.log(`   Visible: ${foundNode.visible}, Parent visible: ${foundNode.parent?.visible}`);
-                
                 highlightedMesh = foundNode;
-                
 
                 foundNode.traverse(function(child) {
                     if (child.isMesh) {
-                        // Crear material rojo emisivo
                         redMaterial = new THREE.MeshStandardMaterial({
                             color: 0xFF0000,
                             emissive: 0xFF0000,
@@ -337,18 +493,15 @@
                             metalness: 0.3,
                             roughness: 0.4
                         });
-                        
                         child.material = redMaterial;
-                        console.log(`   Material rojo aplicado a: ${child.name}`);
                     }
                 });
                 
                 console.log(`Resaltado rojo aplicado a: ${foundNode.name}`);
                 
             } else {
-                console.warn(`No se encontró nodo para "${nodeNameToFind}". Buscando alternativas...`);
+                console.warn(`No se encontró nodo para "${nodeNameToFind}".`);
                 
-                // Mostrar nodos similares
                 let similarNodes = [];
                 let baseName = nodeNameToFind.replace(/\.\d+$/, '').split(/[\s_]/)[0].toLowerCase();
                 
@@ -396,27 +549,26 @@
                 controls.moveForward(-velocity.z * delta);
                 controls.getObject().position.y += (velocity.y * delta);
                 
-                // ACTUALIZAR CONTADOR DE COORDENADAS
                 const pos = controls.getObject().position;
                 document.getElementById('coordinates').innerText = 
                     `X: ${pos.x.toFixed(2)} | Y: ${pos.y.toFixed(2)} | Z: ${pos.z.toFixed(2)}`;
             }
 
-            
+            // Animación del producto (pulso rojo)
             if (highlightedMesh && redMaterial) {
-                pulsePhase += 0.1; // Velocidad de pulsación
-                const pulse = Math.sin(pulsePhase) * 0.5 + 0.5; // Oscila entre 0 y 1
+                pulsePhase += 0.1;
+                const pulse = Math.sin(pulsePhase) * 0.5 + 0.5;
                 
-                // Pulsar la intensidad emisiva dramáticamente
-                redMaterial.emissiveIntensity = 0.3 + (pulse * 1.5); // Entre 0.3 y 1.8
-                
-                // Pulsar también el color del material entre rojo oscuro y brillante
-                const colorIntensity = 0.5 + (pulse * 0.5); // Entre 0.5 y 1.0
+                redMaterial.emissiveIntensity = 0.3 + (pulse * 1.5);
+                const colorIntensity = 0.5 + (pulse * 0.5);
                 redMaterial.color.setRGB(colorIntensity, 0, 0);
-                
-                // Pulsar el color emisivo
-                const emissiveIntensity = 0.7 + (pulse * 0.3); // Entre 0.7 y 1.0
+                const emissiveIntensity = 0.7 + (pulse * 0.3);
                 redMaterial.emissive.setRGB(emissiveIntensity, 0, 0);
+            }
+
+            // Animación de flechas
+            if (activeArrows.length > 0) {
+                animarFlechas();
             }
 
             prevTime = time;

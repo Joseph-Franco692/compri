@@ -103,7 +103,7 @@
                     </div>
                     <div class="buttons-group">
                         <button class="btn-go" onclick="verMapa('${p.ubicacion}')">Mapa 2D</button>
-                        <button class="btn-go-3d" onclick="ver3D(${cx}, ${cy}, ${cz})"><span class="material-icons" style="font-size:18px; margin-right:4px;">view_in_ar</span>Ver en 3D</button>
+                        <button class="btn-go-3d" onclick="ver3D(${cx}, ${cy}, ${cz}, '${p.nombre.replace(/'/g, "\\'")}')"><span class="material-icons" style="font-size:18px; margin-right:4px;">view_in_ar</span>Ver en 3D</button>
                     </div>
                 `;
                 lista.appendChild(item);
@@ -119,9 +119,9 @@
         window.open(`/mapa?ubicacion=${encodeURIComponent(ubicacion)}`, '_blank');
     }
 
-    function ver3D(x, y, z) {
-        window.open(`/modelo3d.html?x=${x}&y=${y}&z=${z}`, '_blank');
-    }
+    function ver3D(x, y, z, nombre) {
+    window.open(`/modelo3d.html?x=${x}&y=${y}&z=${z}&producto=${encodeURIComponent(nombre)}`, '_blank');
+}
 </script>
 
 </body>

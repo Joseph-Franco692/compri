@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <h2><span class="material-icons">location_on</span> Ubicación Exacta</h2>
+    <h2><span class="material-icons">location_on</span> Ubicación Exacta</h2>.
     
     <div class="map-container">
         <svg width="100%" height="auto" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet" style="min-height: 400px;">
@@ -75,8 +75,8 @@
             if (ubicacion) {
                 document.getElementById('status-text-content').innerText = "Buscando en: " + ubicacion;
                 
-                // REGEX NUEVA: Busca "Percha", un espacio, un número y una letra (A o B)
-                // Ej: Match "3B" de "Percha 3B"
+                // REGEX Busca "Percha", un espacio, un número y una letra (A o B)
+                //  Match "3B" de "Percha 3B"
                 const match = ubicacion.match(/Percha\s+(\d+[AB])/i);
 
                 if (match) {
