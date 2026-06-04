@@ -7,11 +7,11 @@ import os
 import random
 import matplotlib.pyplot as plt
 import csv
-import textwrap # Para que el texto largo no se salga de la imagen
+import textwrap 
 
 # --- CONFIGURACIÓN ---
 DATASET_DIR = 'dataset'
-CSV_FILE = 'catalogo_productos_unico.csv' # Asegúrate de que este archivo existe
+CSV_FILE = 'catalogo_productos_unico.csv' 
 
 # --- 1. CARGAR RECURSOS Y CSV ---
 print(" Cargando recursos...")
@@ -38,7 +38,7 @@ try:
                 # TRUCO: Usamos la ruta de la imagen para identificar la clase
                 # Ejemplo ruta: dataset/Sardina_Real/foto.jpg
                 # Extraemos "Sardina_Real"
-                ruta = row['Imagen_Referencia'] # o 'Ruta_Imagen' según tu csv
+                ruta = row['Imagen_Referencia'] 
                 if ruta and '/' in ruta:
                     partes = ruta.split('/')
                     # Asumimos estructura dataset/CLASE/foto
@@ -102,7 +102,7 @@ def mostrar_resultado_con_datos(img_input, clase_detectada, valor_confianza):
     plt.figtext(0.5, 0.05, texto_info, ha="center", fontsize=11, 
                 bbox={"facecolor": caja_color, "alpha": 0.8, "pad": 10}, fontname='Consolas')
 
-    plt.tight_layout(rect=[0, 0.2, 1, 1]) # Ajustamos márgenes para dejar espacio al texto
+    plt.tight_layout(rect=[0, 0.2, 1, 1]) 
 
     # Guardar y abrir
     nombre_archivo = "resultado_detalle.png"

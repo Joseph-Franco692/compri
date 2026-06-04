@@ -36,8 +36,7 @@ model = None
 class_names = []
 catalogo = {}
 
-# Mapeo temporal: clases del modelo viejo (dataset/ raíz) -> carpetas reales (data/dataset/)
-# Se puede eliminar después de re-entrenar el modelo con data/dataset/
+
 CLASS_MAPPING = {
     "Alcohol lic": "Alcohol_medico_LOV",
     "Bbq original": "Bbq_original",
